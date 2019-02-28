@@ -69,8 +69,8 @@ for i in range(len(M.coarse_volumes)):
     q [elements] = 500
     coef[elements2] = 0
     for r in range(rx*ry):
-        coef[r,r] = 1
-        coef[r+100,r+100] = 1
+        coef[elements[r],elements[r]] = 1
+        coef[elements2[r],elements2[r]] = 1
     end = time.time()
     print("This step lasted {0}s".format(end-start))
 
@@ -90,13 +90,16 @@ for i in range(len(M.coarse_volumes)):
 
     total_flow = 0.0
     flow_rate = 0.0
-    for v in range(rx*ry):
-        flow_rate =  + equiv_perm(perm[v], perm[v+rx*ry])*area*(M.coarse_volumes[i].pressure_coarse[v]-M.coarse_volumes[i].pressure_coarse[v+rx*ry])
+
+    elements3 = elements+1
+
+    for v in elements:
+        flow_rate =  + equiv_perm(perm[v], perm[v+1])*area*(M.coarse_volumes[i].pressure_coarse[np.array(v)]-M.coarse_volumes[i].pressure_coarse[np.array(v+1)])
         total_flow = total_flow + flow_rate
 
-    permeability_coarse = total_flow/((area*rx*ry)*(M.coarse_volumes[i].pressure_coarse[v]-M.coarse_volumes[i].pressure_coarse[v+rx*ry]))
+    permeability_coarse = total_flow/((area*rx*ry)*(M.coarse_volumes[i].pressure_coarse[0]-M.coarse_volumes[i].pressure_coarse[1]))
     print(permeability_coarse)
-'''
+
 print("Assembly of upscaling")
 start = time.time()
 coef = lil_matrix((len(M.coarse_volumes), len(M.coarse_volumes)), dtype=np.float_)
@@ -115,12 +118,12 @@ print("This step lasted {0}s".format(end-start))
 print("Setting boundary conditions of coarse mesh")
 start = time.time()
 q = lil_matrix((len(M.coarse_volumes), 1), dtype=np.float_)
-coef[elements] = 0
-q [elements] = 500
-coef[elements2] = 0
 for r in range(25):
-    coef[r,r] = 1
-    coef[r+100,r+100] = 1
+    coef[elements[r]] = 0
+    q [elements[r]] = 500
+    coef[elements2[r]] = 0
+    coef[elements[r],elements[r]] = 1
+    coef[elements2[r],elements2[r]] = 1
 end = time.time()
 print("This step lasted {0}s".format(end-start))
 
@@ -132,7 +135,6 @@ P = spsolve(coef,q)
 end = time.time()
 print("This step lasted {0}s".format(end-start))
 
-'''
 for cvolume,index in zip(M.coarse_volumes,range(len(P))):
     M.pressure[cvolume.volumes.global_id[cvolume.volumes.all]] = P[index]
 
