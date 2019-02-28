@@ -1,4 +1,5 @@
-# UPSCALLING OF STRUCTURED MESHES
+# LOCAL UPSCALLING OF STRUCTURED MESHES IN HOMOGENEOS MEDIA
+
 import numpy as np
 import time
 import pdb
@@ -8,11 +9,14 @@ from pymoab import rng, types
 from tpfa.boundary_conditions import BoundaryConditions
 from scipy.sparse import csr_matrix, lil_matrix
 from scipy.sparse.linalg import spsolve
-from preprocessor import M
-import os
+import mspreprocessor.geoUtil.geoTools as gtool
+from mspreprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as msh
 
-print("Initializating mesh")
-os.system('python preprocessor.py')
+start = time.time()
+M = msh("25.h5m", dim = 3)
+end = time.time()
+print("The preprocessing step lasted {0}s".format(end-start))
+
 dx, dy, dz = 1, 1, 1
 nx, ny, nz = 25, 25,25
 cx, cy, cz = 5, 5, 5
@@ -85,9 +89,6 @@ print("Assembly of upscaling")
 start = time.time()
 coef = lil_matrix((len(M.coarse_volumes), len(M.coarse_volumes)), dtype=np.float_)
 
-#for i in range(len(M.coarse_volumes)):
-#    coarse_centroid[i] = (sum(M.coarse_volumes[i].volumes.center)/125)
-
 for i in range(len(M.coarse_volumes)):
     #M.coarse_volumes[i].permeability_coarse[:] = permeability_coarse
     #perm = M.coarse_volumes[i].permeability_coarse[:]
@@ -122,14 +123,6 @@ print("This step lasted {0}s".format(end-start))
 
 for cvolume,index in zip(M.coarse_volumes,range(len(P))):
     M.pressure[cvolume.volumes.global_id[cvolume.volumes.all]] = P[index]
-
-
-# for cvolume,index in zip(M.coarse_volumes,range(len(P))):
-#     cvolume.pressure_coarse[:] = P[index]
-
-#
-# for i in range(len(M.coarse_volumes)):
-#     M.pressure[M.coarse_volumes[i].volumes.global_idM.coarse_volumes[i].volumes.all] = P[i]
 
 print("Printing results")
 M.core.print()
