@@ -4,6 +4,7 @@ Use of Pymoab methods to read and manage the input mesh
 from pymoab import core, types, rng, topo_util
 from pymoab import skinner as sk
 import numpy as np
+import yaml
 import pdb
 
 
@@ -299,19 +300,28 @@ class CoreMoab:
                 range_merged.merge(arg)
         return range_merged
 
-    def print(self, text=None):
-        #m1 = self.mb.create_meshset()
-        #self.mb.add_entities(m1, self.all_nodes)
+    def print(self, text=None, config_input="print_settings.yml"):
+        with open("print_settings.yml", 'r') as f:
+            data = yaml.load(f)
 
-        #m2 = self.mb.create_meshset()
-        #self.mb.add_entities(m2, self.all_faces)
-        #self.mb.remove_entities(m2, self.all_nodes)
+        nodes = data['nodes']
+        edges = data['edges']
+        faces = data['faces']
+        volumes = data['volumes']
+        all_entities = data['all entities']
+
+        m1 = self.mb.create_meshset()
+        self.mb.add_entities(m1, self.all_nodes)
+
+        m2 = self.mb.create_meshset()
+        self.mb.add_entities(m2, self.all_faces)
+        self.mb.remove_entities(m2, self.all_nodes)
 
         m3 = self.mb.create_meshset()
         self.mb.add_entities(m3, self.all_volumes)
 
-        #m4 = self.mb.create_meshset()
-        #self.mb.add_entities(m4, self.all_edges)
+        m4 = self.mb.create_meshset()
+        self.mb.add_entities(m4, self.all_edges)
         if text is None:
             text = "output"
         extension = ".vtk"
@@ -321,10 +331,18 @@ class CoreMoab:
         text4 = text + "-edges" + extension
         text5 = text + "-all" + extension
         text6 = text + "-together" + extension
-        #self.mb.write_file(text1, [m1])
-        #self.mb.write_file(text2, [m2])
-        if self.dimension == 3:
+
+        if nodes != 0:
+            self.mb.write_file(text1, [m1])
+
+        if faces != 0:
+            self.mb.write_file(text2, [m2])
+
+        if self.dimension == 3 and volumes != 0:
             self.mb.write_file(text3, [m3])
 
-        #self.mb.write_file(text4, [m4])
-        #self.mb.write_file(text5)
+        if edges != 0:
+            self.mb.write_file(text4, [m4])
+
+        if all_entities != 0:
+            self.mb.write_file(text5)
