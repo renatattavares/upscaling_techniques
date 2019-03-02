@@ -38,9 +38,6 @@ class FineScaleMeshMS(FineScaleMesh):
             self.volumes = MeshEntitiesMS(self.core, entity_type = "volumes")
 
     def init_variables(self):
-        #self.alma = MoabVariableMS(self.core,data_size=1,var_type= "volumes",  data_format="int", name_tag="alma")
-        #self.ama = MoabVariableMS(self.core,data_size=1,var_type= "faces",  data_format="float", name_tag="ama",data_density="sparse")
-        #self.arma = MoabVariableMS(self.core,data_size=3,var_type= "edges",  data_format="float", name_tag="arma", data_density="sparse")
         self.permeability = MoabVariableMS(self.core,data_size=1,var_type= "volumes",  data_format="int", name_tag="permeability")
         self.pressure = MoabVariableMS(self.core,data_size=1,var_type= "volumes",  data_format="float", name_tag="pressure")
         self.erro = MoabVariableMS(self.core,data_size=1,var_type= "volumes",  data_format="float", name_tag="erro")

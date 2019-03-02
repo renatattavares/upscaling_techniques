@@ -30,8 +30,8 @@ def equiv_perm(k1, k2):
 def centroid_dist(c1, c2):
     return ((c1-c2)**2).sum()
 
-print("Setting the permeability")
-M.permeability[:] = 1
+print("Setting the permeability tensor")
+M.permeability[:] = 1 #np.array([[1, 0],[2, 0],[3, 0]])
 area = dx*dy
 
 for i in range(len(M.coarse_volumes)):
