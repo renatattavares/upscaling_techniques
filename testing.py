@@ -1,4 +1,4 @@
-# LOCAL UPSCALLING OF STRUCTURED MESHES IN HOMOGENEOS MEDIA
+# LOCAL UPSCALLING OF STRUCTURED MESHES IN HOMOGENEOUS MEDIA
 
 import numpy as np
 import time
@@ -6,7 +6,7 @@ import pdb
 import xlsxwriter
 from math import pi
 from pymoab import rng, types
-from tpfa.boundary_conditions import BoundaryConditions
+from boundary_conditions import BoundaryConditions as bc
 from scipy.sparse import csr_matrix, lil_matrix
 from scipy.sparse.linalg import spsolve
 import mspreprocessor.geoUtil.geoTools as gtool
@@ -23,18 +23,6 @@ cx, cy, cz = 5, 5, 5
 rx, ry, rz = 5, 5, 5
 num_elements = nx*ny*nz
 num_elements_coarse = rx*ry*rz
-
-elements = np.array((), dtype=int)
-
-for i in range(25):
-    elements = np.append(elements, ((i+1)-1)*5)
-    print(((i+1)-1)*5)
-
-elements2 = np.array((), dtype=int)
-
-for i in range(25):
-    elements2 = np.append(elements2, (4 + ((i+1)-1)*5))
-    print(4 + ((i+1)-1)*5)
 
 def equiv_perm(k1, k2):
     return (2*k1*k2)/(k1 + k2)
@@ -64,20 +52,14 @@ for i in range(len(M.coarse_volumes)):
 
     print("Setting boundary conditions of coarse volume {0}".format(i))
     start = time.time()
-    q = lil_matrix((num_elements_coarse, 1), dtype=np.float_)
-    coef[elements] = 0
-    q [elements] = 500
-    coef[elements2] = 0
-    for r in range(rx*ry):
-        coef[elements[r],elements[r]] = 1
-        coef[elements2[r],elements2[r]] = 1
+    coef, q = bc(num_elements_coarse, rx,ry, coef, flux_direction='x')
     end = time.time()
     print("This step lasted {0}s".format(end-start))
 
     print("Solving the problem of coarse volume {0}".format(i))
     start = time.time()
-    coef = lil_matrix.tocsr(coef)
-    q = lil_matrix.tocsr(q)
+    coef = lil_matrix.tocsr(bc.coef)
+    q = lil_matrix.tocsr(bc.q)
     P_coarse_volume = spsolve(coef,q)
     end = time.time()
     print("This step lasted {0}s".format(end-start))
@@ -88,10 +70,10 @@ for i in range(len(M.coarse_volumes)):
     end = time.time()
     print("This step lasted {0}s".format(end-start))
 
+    print("Calculating effective permeability")
+    start = time.time()
     total_flow = 0.0
     flow_rate = 0.0
-
-    elements3 = elements+1
 
     for v in elements:
         flow_rate =  + equiv_perm(perm[v], perm[v+1])*area*(M.coarse_volumes[i].pressure_coarse[np.array(v)]-M.coarse_volumes[i].pressure_coarse[np.array(v+1)])
@@ -99,6 +81,8 @@ for i in range(len(M.coarse_volumes)):
 
     permeability_coarse = total_flow/((area*rx*ry)*(M.coarse_volumes[i].pressure_coarse[0]-M.coarse_volumes[i].pressure_coarse[1]))
     print(permeability_coarse)
+    end = time.time()
+    print("This step lasted {0}s".format(end-start))
 
 print("Assembly of upscaling")
 start = time.time()
