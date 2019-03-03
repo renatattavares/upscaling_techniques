@@ -9,6 +9,7 @@ class partitionManager(object):
            data = file.read()
            m = yaml.safe_load(data)
         self.create_tree(m)
+
         # partition tree
         self.tree = m
         # default config file for each layer

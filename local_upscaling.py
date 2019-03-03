@@ -1,5 +1,4 @@
 # LOCAL UPSCALLING OF STRUCTURED MESHES IN HOMOGENEOS MEDIA
-
 import numpy as np
 import time
 import pdb
@@ -9,13 +8,7 @@ from pymoab import rng, types
 from tpfa.boundary_conditions import BoundaryConditions
 from scipy.sparse import csr_matrix, lil_matrix
 from scipy.sparse.linalg import spsolve
-import mspreprocessor.geoUtil.geoTools as gtool
-from mspreprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as msh
-
-start = time.time()
-M = msh("25.h5m", dim = 3)
-end = time.time()
-print("The preprocessing step lasted {0}s".format(end-start))
+from preprocessor import M
 
 dx, dy, dz = 1, 1, 1
 nx, ny, nz = 25, 25,25
