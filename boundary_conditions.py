@@ -2,23 +2,19 @@ import numpy as np
 from scipy.sparse import csr_matrix, lil_matrix
 
 class BoundaryConditions():
-    def __init__(self, num_elements_coarse, rx, ry, coef, flux_direction, coarse_mesh):
+    def __init__(self, num_elements_coarse, rx, ry, coef, flux_direction):
         self.coef = coef
         self.num_elements_coarse = num_elements_coarse
         self.rx = rx
         self.ry = ry
         self.q = lil_matrix((self.num_elements_coarse, 1), dtype=np.float_)
         self.flux_direction = flux_direction
-        self.coarse_mesh = coarse_mesh
-
-        if self.coarse_mesh != 1:
-            if self.flux_direction == 'x':
-                self.coef, self.q = self.x()
-            elif self.flux_direction == 'y':
-                pass
-            elif self.flux_direction == 'z':
-                self.coef, self.q = self.z()
-            return self.coef, self.q
+        if self.flux_direction == 'x':
+            self.coef, self.q = self.x()
+        elif self.flux_direction == 'y':
+            pass
+        elif self.flux_direction == 'z':
+            self.coef, self.q = self.z()
         # elif
         #     if self.flux_direction == 'x':
         #         pass
@@ -30,22 +26,23 @@ class BoundaryConditions():
         #         #self.coef, self.q = self.coarse_z()
 
     def x(self):
-        elements = np.array((), dtype=int)
-        elements2 = np.array((), dtype=int)
+        print('Flux direction x')
+        self.elements = np.array((), dtype=int)
+        self.elements2 = np.array((), dtype=int)
 
         for i in range(self.rx*self.ry):
-            elements = np.append(elements, ((i+1)-1)*5)
+            self.elements = np.append(self.elements, ((i+1)-1)*5)
             #print(((i+1)-1)*5)
         for i in range(self.rx*self.ry):
-            elements2 = np.append(elements2, ((self.rx-1) + ((i+1)-1)*5))
+            self.elements2 = np.append(self.elements2, ((self.rx-1) + ((i+1)-1)*5))
             #print(4 + ((i+1)-1)*5)
 
-        self.coef[elements] = 0
-        self.q [elements] = 500
-        self.coef[elements2] = 0
+        self.coef[self.elements] = 0
+        self.q [self.elements] = 500
+        self.coef[self.elements2] = 0
         for r in range(self.rx*self.ry):
-            self.coef[elements[r],elements[r]] = 1
-            self.coef[elements2[r],elements2[r]] = 1
+            self.coef[self.elements[r],self.elements[r]] = 1
+            self.coef[self.elements2[r],self.elements2[r]] = 1
         return self.coef, self.q
 
     def y(self):
