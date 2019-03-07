@@ -6,7 +6,7 @@ import pdb
 import xlsxwriter
 from math import pi
 from pymoab import rng, types
-from boundary_conditions import BoundaryConditions as bc
+from boundary_conditions import BoundaryConditions
 from scipy.sparse import csr_matrix, lil_matrix
 from scipy.sparse.linalg import spsolve
 import mspreprocessor.geoUtil.geoTools as gtool
@@ -52,7 +52,8 @@ for i in range(len(M.coarse_volumes)):
 
     print("Setting boundary conditions of coarse volume {0}".format(i))
     start = time.time()
-    coef, q = bc(num_elements_coarse, rx,ry, coef, flux_direction='x')
+    flux_direction = 'x'
+    bc = BoundaryConditions(num_elements_coarse, rx,ry, coef, flux_direction)
     end = time.time()
     print("This step lasted {0}s".format(end-start))
 
@@ -75,7 +76,7 @@ for i in range(len(M.coarse_volumes)):
     total_flow = 0.0
     flow_rate = 0.0
 
-    for v in elements:
+    for v in bc.elements:
         flow_rate =  + equiv_perm(perm[v], perm[v+1])*area*(M.coarse_volumes[i].pressure_coarse[np.array(v)]-M.coarse_volumes[i].pressure_coarse[np.array(v+1)])
         total_flow = total_flow + flow_rate
 
@@ -103,11 +104,11 @@ print("Setting boundary conditions of coarse mesh")
 start = time.time()
 q = lil_matrix((len(M.coarse_volumes), 1), dtype=np.float_)
 for r in range(25):
-    coef[elements[r]] = 0
-    q [elements[r]] = 500
-    coef[elements2[r]] = 0
-    coef[elements[r],elements[r]] = 1
-    coef[elements2[r],elements2[r]] = 1
+    coef[bc.elements[r]] = 0
+    q [bc.elements[r]] = 500
+    coef[bc.elements2[r]] = 0
+    coef[bc.elements[r],bc.elements[r]] = 1
+    coef[bc.elements2[r],bc.elements2[r]] = 1
 end = time.time()
 print("This step lasted {0}s".format(end-start))
 
