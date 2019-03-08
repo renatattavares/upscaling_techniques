@@ -52,7 +52,7 @@ for i in range(len(M.coarse_volumes)):
 
     print("Setting boundary conditions of coarse volume {0}".format(i))
     start = time.time()
-    flux_direction = 'x'
+    flux_direction = 'z'
     bc = BoundaryConditions(num_elements_coarse, rx,ry, coef, flux_direction)
     end = time.time()
     print("This step lasted {0}s".format(end-start))
@@ -76,47 +76,60 @@ for i in range(len(M.coarse_volumes)):
     total_flow = 0.0
     flow_rate = 0.0
 
-    for v in bc.elements:
-        flow_rate =  + equiv_perm(perm[v], perm[v+1])*area*(M.coarse_volumes[i].pressure_coarse[np.array(v)]-M.coarse_volumes[i].pressure_coarse[np.array(v+1)])
+    for v in range(len(bc.elements)):
+        flow_rate =  + equiv_perm(perm[v], perm[v+rx*ry])*area*(M.coarse_volumes[i].pressure_coarse[v]-M.coarse_volumes[i].pressure_coarse[v+rx*ry])
         total_flow = total_flow + flow_rate
 
-    permeability_coarse = total_flow/((area*rx*ry)*(M.coarse_volumes[i].pressure_coarse[0]-M.coarse_volumes[i].pressure_coarse[1]))
+    permeability_coarse = total_flow/((area*rx*ry)*(M.coarse_volumes[i].pressure_coarse[v]-M.coarse_volumes[i].pressure_coarse[v+rx*ry]))
+    #     flow_rate =  + equiv_perm(perm[v], perm[v+1])*area*(M.coarse_volumes[i].pressure_coarse[np.array(v)]-M.coarse_volumes[i].pressure_coarse[np.array(v+1)])
+    #     total_flow = total_flow + flow_rate
+    #
+    # permeability_coarse = total_flow/((area*rx*ry)*(M.coarse_volumes[i].pressure_coarse[0]-M.coarse_volumes[i].pressure_coarse[1]))
     print(permeability_coarse)
     end = time.time()
     print("This step lasted {0}s".format(end-start))
 
 print("Assembly of upscaling")
 start = time.time()
-coef = lil_matrix((len(M.coarse_volumes), len(M.coarse_volumes)), dtype=np.float_)
+coarse_coef = lil_matrix((len(M.coarse_volumes), len(M.coarse_volumes)), dtype=np.float_)
 
 for i in range(len(M.coarse_volumes)):
     #M.coarse_volumes[i].permeability_coarse[:] = permeability_coarse
     #perm = M.coarse_volumes[i].permeability_coarse[:]
     adj = M.coarse_volumes[i].faces.coarse_neighbors
     for j in range(len(adj)):
-        id = np.array(adj[j],  dtype= np.int)
-        coef[i,id] = equiv_perm(1, 1)/25
-    coef[i,i] = (-1)*coef[i].sum()
+        local_id = np.array(adj[j],  dtype= np.int)
+        coarse_coef[i,local_id] = equiv_perm(1, 1)/25
+    coarse_coef[i,i] = (-1)*coarse_coef[i].sum()
 end = time.time()
 print("This step lasted {0}s".format(end-start))
 
 print("Setting boundary conditions of coarse mesh")
 start = time.time()
-q = lil_matrix((len(M.coarse_volumes), 1), dtype=np.float_)
-for r in range(25):
-    coef[bc.elements[r]] = 0
-    q [bc.elements[r]] = 500
-    coef[bc.elements2[r]] = 0
-    coef[bc.elements[r],bc.elements[r]] = 1
-    coef[bc.elements2[r],bc.elements2[r]] = 1
+coarse_coef, coarse_q = bc.coarse_bc(coarse_coef, len(M.coarse_volumes))
 end = time.time()
 print("This step lasted {0}s".format(end-start))
 
+'''
+workbook = xlsxwriter.Workbook('verify.xlsx')
+worksheet = workbook.add_worksheet()
+matrix = lil_matrix.toarray(coarse_coef)
+
+row = 0
+col = 0
+
+for row in range(125):
+  for col in range(125):
+    worksheet.write(row, col, matrix[row][col])
+
+workbook.close()
+'''
+
 print("Solving the problem")
 start = time.time()
-coef = lil_matrix.tocsr(coef)
-q = lil_matrix.tocsr(q)
-P = spsolve(coef,q)
+coarse_coef = lil_matrix.tocsr(coarse_coef)
+coarse_q = lil_matrix.tocsr(coarse_q)
+P = spsolve(coarse_coef,coarse_q)
 end = time.time()
 print("This step lasted {0}s".format(end-start))
 
