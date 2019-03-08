@@ -4,8 +4,7 @@ import time
 import pdb
 import xlsxwriter
 from math import pi
-from pymoab import rng, types
-from tpfa.boundary_conditions import BoundaryConditions
+from pymoab import rng
 from scipy.sparse import csr_matrix, lil_matrix
 from scipy.sparse.linalg import spsolve
 from preprocessor import M
@@ -104,6 +103,21 @@ for r in range(25):
     coef[r+100,r+100] = 1
 end = time.time()
 print("This step lasted {0}s".format(end-start))
+
+'''
+workbook = xlsxwriter.Workbook('correct.xlsx')
+worksheet = workbook.add_worksheet()
+matrix = lil_matrix.toarray(coef)
+
+row = 0
+col = 0
+
+for row in range(125):
+  for col in range(125):
+    worksheet.write(row, col, matrix[row][col])
+
+workbook.close()
+'''
 
 print("Solving the problem")
 start = time.time()
