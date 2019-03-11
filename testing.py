@@ -98,9 +98,9 @@ for i in range(len(M.coarse_volumes)):
     #perm = M.coarse_volumes[i].permeability_coarse[:]
     adj = M.coarse_volumes[i].faces.coarse_neighbors
     for j in range(len(adj)):
-        local_id = np.array(adj[j],  dtype= np.int)
-        coarse_coef[i,local_id] = equiv_perm(1, 1)/25
-    coarse_coef[i,i] = (-1)*coarse_coef[i].sum()
+        id = np.array(adj[j],  dtype= np.int)
+        coef[i,id] = equiv_perm(1, 1)/25
+    coef[i,i] = (-1)*coef[i].sum()
 end = time.time()
 print("This step lasted {0}s".format(end-start))
 
@@ -129,12 +129,12 @@ print("Solving the problem")
 start = time.time()
 coarse_coef = lil_matrix.tocsr(coarse_coef)
 coarse_q = lil_matrix.tocsr(coarse_q)
-P = spsolve(coarse_coef,coarse_q)
+coarse_p = spsolve(coarse_coef,coarse_q)
 end = time.time()
 print("This step lasted {0}s".format(end-start))
 
 for cvolume,index in zip(M.coarse_volumes,range(len(P))):
-    M.pressure[cvolume.volumes.global_id[cvolume.volumes.all]] = P[index]
+    M.pressure[cvolume.volumes.global_id[cvolume.volumes.all]] = coarse_p[index]
 
 print("Printing results")
 M.core.print()

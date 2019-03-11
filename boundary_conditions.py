@@ -67,10 +67,11 @@ class BoundaryConditions():
         self.coarse_coef = coarse_coef
         self.coarse_q = lil_matrix((coarses, 1), dtype=np.float_)
 
+        self.coarse_coef[self.elements] = 0
+        self.coarse_q [self.elements] = 500
+        self.coarse_coef[self.elements2] = 0
+
         for r in range(self.rx*self.ry):
-            self.coarse_coef[self.elements[r]] = 0
-            self.coarse_q [self.elements[r]] = 500
-            self.coarse_coef[self.elements2[r]] = 0
             self.coarse_coef[self.elements[r],self.elements[r]] = 1
             self.coarse_coef[self.elements2[r],self.elements2[r]] = 1
 
