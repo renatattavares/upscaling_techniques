@@ -13,8 +13,8 @@ from scipy.sparse.linalg import spsolve
 from preprocessor import M
 
 dx, dy, dz = 1, 1, 1
-nx, ny, nz = 25, 25,25
-cx, cy, cz = 5, 5, 5
+nx, ny, nz = 5, 5,5
+cx, cy, cz = 1, 1, 1
 rx, ry, rz = 5, 5, 5
 num_elements = nx*ny*nz
 num_elements_coarse = rx*ry*rz
@@ -26,51 +26,81 @@ def centroid_dist(c1, c2):
     return ((c1-c2)**2).sum()
 
 print("Setting the permeability")
-M.permeability[:] = 1
+#M.permeability[:] = 1
+permeability = np.array([[1,0,0],[0,100,0],[0,0,200]])
 flux_direction = ['x', 'z']
+area = dx*dy
 
-for d in flux_direction:
-    for i in range(len(M.coarse_volumes)):
-        print("Assembly of coarse volume {0}".format(i))
-        start = time.time()
-        adj = M.coarse_volumes[i].volumes.bridge_adjacencies(M.coarse_volumes[i].volumes.all, 2, 3) # IDs locais
-        perm = M.permeability[M.coarse_volumes[i].volumes.global_id[M.coarse_volumes[i].volumes.all]]
-        center = M.coarse_volumes[i].volumes.center[M.coarse_volumes[i].volumes.all]
-        coef = lil_matrix((num_elements_coarse, num_elements_coarse), dtype=np.float_)
-        for b in range(num_elements_coarse):
-            adjacencies = adj[b] # Array de IDs locais
-            for c in range(len(adjacencies)):
-                id = np.array( [adjacencies[c]],  dtype= np.int)
-                coef[b,id] = equiv_perm(perm[b], perm[id])/1
-            coef[b,b] = (-1)*coef[b].sum()
-        end = time.time()
-        print("This step lasted {0}s".format(end-start))
+# for d in flux_direction:
+#     print("Upscaling in {0} direction".format(d))
 
-        print("Setting boundary conditions of coarse volume {0}".format(i))
-        start = time.time()
-        bc = BoundaryConditions(num_elements_coarse, rx,ry, coef, d)
-        end = time.time()
-        print("This step lasted {0}s".format(end-start))
+for i in range(len(M.coarse_volumes)):
+    print("Assembly of coarse volume {0}".format(i))
+    start = time.time()
+    adj = M.coarse_volumes[i].volumes.bridge_adjacencies(M.coarse_volumes[i].volumes.all, 2, 3) # IDs locais
+    #perm = M.permeability[M.coarse_volumes[i].volumes.global_id[M.coarse_volumes[i].volumes.all]]
+    center = M.coarse_volumes[i].volumes.center[M.coarse_volumes[i].volumes.all]
+    coef = lil_matrix((num_elements_coarse, num_elements_coarse), dtype=np.float_)
+    for b in range(num_elements_coarse):
+        adjacencies = adj[b]
+        for c in range(len(adjacencies)):
+            id = np.array([adjacencies[c]],  dtype= np.int)
+            direction = (center[b]-center[id])**2
+            perm = np.linalg.norm(np.dot(direction, permeability))
+            coef[b,id] = perm/centroid_dist(center[b], center[id])
+            print(coef[b,id])
+        coef[b,b] = (-1)*coef[b].sum()
 
-        print("Solving the problem of coarse volume {0}".format(i))
-        start = time.time()
-        coef = lil_matrix.tocsr(bc.coef)
-        q = lil_matrix.tocsr(bc.q)
-        P_coarse_volume = spsolve(coef,q)
-        end = time.time()
-        print("This step lasted {0}s".format(end-start))
+    end = time.time()
+    print("This step lasted {0}s".format(end-start))
 
-        print("Storing results of coarse volume {0}".format(i))
-        start = time.time()
-        M.coarse_volumes[i].pressure_coarse[:] = P_coarse_volume
-        end = time.time()
-        print("This step lasted {0}s".format(end-start))
+    print("Setting boundary conditions of coarse volume {0}".format(i))
+    start = time.time()
+    q = lil_matrix((num_elements_coarse, 1), dtype=np.float_)
+    coef[0:rx*ry] = 0
+    q [0:rx*ry] = 500
+    coef[(num_elements_coarse)-(rx*ry):num_elements_coarse] = 0
+    for r in range(rx*ry):
+        coef[r,r] = 1
+        coef[r+(num_elements_coarse)-(rx*ry),r+(num_elements_coarse)-(rx*ry)] = 1
+    end = time.time()
+    print("This step lasted {0}s".format(end-start))
 
-        print("Calculating effective permeability")
-        start = time.time()
-        fbp = FlowBasedPermeability(M, d, bc)
-        end = time.time()
-        print("This step lasted {0}s".format(end-start))
+    print("Solving the problem of coarse volume {0}".format(i))
+    start = time.time()
+    coef = lil_matrix.tocsr(coef)
+    q = lil_matrix.tocsr(q)
+    P_coarse_volume = spsolve(coef,q)
+    end = time.time()
+    print("This step lasted {0}s".format(end-start))
+
+    print("Storing results of coarse volume {0}".format(i))
+    start = time.time()
+    M.coarse_volumes[i].pressure_coarse[:] = P_coarse_volume
+    end = time.time()
+    print("This step lasted {0}s".format(end-start))
+
+    print("Calculating effective permeability")
+    start = time.time()
+
+    total_flow = 0.0
+    flow_rate = 0.0
+
+    for v in range(rx*ry):
+        adjacencies = adj[v]
+        for w in range(len(adjacencies)):
+            id = np.array([adjacencies[w]],  dtype= np.int)
+            direction = (center[v]-center[id])**2
+            perm = np.linalg.norm(np.dot(direction, permeability))
+            flow_rate =  + perm*area*(M.coarse_volumes[i].pressure_coarse[v]-M.coarse_volumes[i].pressure_coarse[id])
+            total_flow = total_flow + flow_rate
+
+    permeability_coarse = total_flow/((area*rx*ry)*(M.coarse_volumes[i].pressure_coarse[v]-M.coarse_volumes[i].pressure_coarse[id]))
+    print(permeability_coarse)
+
+    end = time.time()
+    print("This step lasted {0}s".format(end-start))
+
 
 print("Assembly of upscaling")
 start = time.time()
@@ -82,7 +112,7 @@ for i in range(len(M.coarse_volumes)):
     adj = M.coarse_volumes[i].faces.coarse_neighbors
     for j in range(len(adj)):
         id = np.array(adj[j],  dtype= np.int)
-        coarse_coef[i,id] = fbp.effective_permeability/2.5
+        coarse_coef[i,id] = 1/2.5
     coarse_coef[i,i] = (-1)*coarse_coef[i].sum()
 end = time.time()
 print("This step lasted {0}s".format(end-start))
