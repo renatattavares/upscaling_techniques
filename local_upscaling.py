@@ -1,19 +1,22 @@
 # LOCAL UPSCALLING OF STRUCTURED MESHES IN HOMOGENEOS MEDIA
+import sys
+sys.path.append('/home/renata/Documentos/repo')
+from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as preprocessor
 import numpy as np
 import time
 import pdb
-import xlsxwriter
 from math import pi
 from pymoab import rng
 from scipy.sparse import csr_matrix, lil_matrix
 from scipy.sparse.linalg import spsolve
-from preprocessor import M
+#import xlsxwriter
 
+M = preprocessor('mesh/25.h5m', dim = 3)
 dx, dy, dz = 1, 1, 1
-nx, ny, nz = 25, 25,25
-cx, cy, cz = 5, 5, 5
-rx, ry, rz = 5, 5, 5
-num_elements = nx*ny*nz
+nx, ny, nz = np.cbrt(len(M.volumes)), np.cbrt(len(M.volumes)), np.cbrt(len(M.volumes))
+cx, cy, cz = 5, 5, 5 # Coarsening ratio
+rx, ry, rz = (nx/cx), (ny/cy), (nz/cz)
+num_elements = len(M.volumes)
 num_elements_coarse = rx*ry*rz
 
 def equiv_perm(k1, k2):
@@ -23,8 +26,7 @@ def centroid_dist(c1, c2):
     return ((c1-c2)**2).sum()
 
 print("Setting the permeability tensor")
-M.permeability[:] = 1 #np.array([[1, 0],[2, 0],[3, 0]])
-area = dx*dy
+M.permeability[:] = np.array([1, 1, 1])
 
 for i in range(len(M.coarse_volumes)):
     print("Assembly of coarse volume {0}".format(i))
