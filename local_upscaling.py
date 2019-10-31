@@ -31,9 +31,9 @@ M.permeability[:] = np.array([1, 1, 1])
 for i in range(len(M.coarse_volumes)):
     print("Assembly of coarse volume {0}".format(i))
     start = time.time()
-    adj = M.coarse_volumes[i].volumes.bridge_adjacencies(M.coarse_volumes[i].volumes.all, 2, 3) # IDs locais
-    perm = M.permeability[M.coarse_volumes[i].volumes.global_id[M.coarse_volumes[i].volumes.all]]
-    center = M.coarse_volumes[i].volumes.center[M.coarse_volumes[i].volumes.all]
+    adj = M.coarse.elements[i].volumes.bridge_adjacencies(M.coarse.elements[i].volumes.all, 2, 3) # IDs locais
+    perm = M.permeability[M.coarse.elements[i].volumes.global_id[M.coarse.elements[i].volumes.all]]
+    center = M.coarse.elements[i].volumes.center[M.coarse.elements[i].volumes.all]
     coef = lil_matrix((num_elements_coarse, num_elements_coarse), dtype=np.float_)
     for b in range(num_elements_coarse):
         adjacencies = adj[b] # Array de IDs locais
@@ -66,27 +66,27 @@ for i in range(len(M.coarse_volumes)):
 
     print("Storing results of coarse volume {0}".format(i))
     start = time.time()
-    M.coarse_volumes[i].pressure_coarse[:] = P_coarse_volume
+    M.coarse.elements[i].pressure_coarse[:] = P_coarse_volume
     end = time.time()
     print("This step lasted {0}s".format(end-start))
 
     total_flow = 0.0
     flow_rate = 0.0
     for v in range(rx*ry):
-        flow_rate =  + equiv_perm(perm[v], perm[v+rx*ry])*area*(M.coarse_volumes[i].pressure_coarse[v]-M.coarse_volumes[i].pressure_coarse[v+rx*ry])
+        flow_rate =  + equiv_perm(perm[v], perm[v+rx*ry])*area*(M.coarse.elements[i].pressure_coarse[v]-M.coarse.elements[i].pressure_coarse[v+rx*ry])
         total_flow = total_flow + flow_rate
 
-    permeability_coarse = total_flow/((area*rx*ry)*(M.coarse_volumes[i].pressure_coarse[v]-M.coarse_volumes[i].pressure_coarse[v+rx*ry]))
+    permeability_coarse = total_flow/((area*rx*ry)*(M.coarse.elements[i].pressure_coarse[v]-M.coarse.elements[i].pressure_coarse[v+rx*ry]))
     print(permeability_coarse)
 
 print("Assembly of upscaling")
 start = time.time()
-coef = lil_matrix((len(M.coarse_volumes), len(M.coarse_volumes)), dtype=np.float_)
+coef = lil_matrix((len(M.coarse.elements), len(M.coarse.elements)), dtype=np.float_)
 
-for i in range(len(M.coarse_volumes)):
+for i in range(len(M.coarse.elements)):
     #M.coarse_volumes[i].permeability_coarse[:] = permeability_coarse
     #perm = M.coarse_volumes[i].permeability_coarse[:]
-    adj = M.coarse_volumes[i].faces.coarse_neighbors
+    adj = M.coarse.elements[i].faces.coarse_neighbors
     for j in range(len(adj)):
         id = np.array(adj[j],  dtype= np.int)
         coef[i,id] = equiv_perm(1, 1)/25
@@ -96,7 +96,7 @@ print("This step lasted {0}s".format(end-start))
 
 print("Setting boundary conditions of coarse mesh")
 start = time.time()
-q = lil_matrix((len(M.coarse_volumes), 1), dtype=np.float_)
+q = lil_matrix((len(M.coarse.elements), 1), dtype=np.float_)
 coef[0:25] = 0
 q [0:25] = 500
 coef[100:125] = 0
@@ -130,7 +130,7 @@ end = time.time()
 print("This step lasted {0}s".format(end-start))
 
 
-for cvolume,index in zip(M.coarse_volumes,range(len(P))):
+for cvolume,index in zip(M.coarse.elements,range(len(P))):
     M.pressure[cvolume.volumes.global_id[cvolume.volumes.all]] = P[index]
 
 print("Printing results")
