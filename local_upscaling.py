@@ -28,7 +28,7 @@ def centroid_dist(c1, c2):
 print("Setting the permeability tensor")
 M.permeability[:] = np.array([1, 1, 1])
 
-for i in range(len(M.coarse_volumes)):
+for i in range(len(M.coarse.elements)):
     print("Assembly of coarse volume {0}".format(i))
     start = time.time()
     adj = M.coarse.elements[i].volumes.bridge_adjacencies(M.coarse.elements[i].volumes.all, 2, 3) # IDs locais
