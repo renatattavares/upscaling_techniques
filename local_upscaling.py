@@ -1,7 +1,7 @@
 # LOCAL UPSCALLING OF STRUCTURED MESHES IN HOMOGENEOS MEDIA
 import sys
-sys.path.append('/home/renata/Documentos/repo')
-from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as preprocessor
+sys.path.append('/elliptic_case')
+from static.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as preprocessor
 import numpy as np
 import time
 import pdb
@@ -18,6 +18,7 @@ cx, cy, cz = 5, 5, 5 # Coarsening ratio
 rx, ry, rz = (nx/cx), (ny/cy), (nz/cz)
 num_elements = len(M.volumes)
 num_elements_coarse = rx*ry*rz
+num_elements_coarse = np.int64(num_elements_coarse)
 
 def equiv_perm(k1, k2):
     return (2*k1*k2)/(k1 + k2)
@@ -30,16 +31,17 @@ M.permeability[:] = np.array([1, 1, 1])
 
 for i in range(len(M.coarse.elements)):
     print("Assembly of coarse volume {0}".format(i))
+    i = np.int64(i)
     start = time.time()
     adj = M.coarse.elements[i].volumes.bridge_adjacencies(M.coarse.elements[i].volumes.all, 2, 3) # IDs locais
-    perm = M.permeability[M.coarse.elements[i].volumes.global_id[M.coarse.elements[i].volumes.all]]
-    center = M.coarse.elements[i].volumes.center[M.coarse.elements[i].volumes.all]
-    coef = lil_matrix((num_elements_coarse, num_elements_coarse), dtype=np.float_)
+    perm = M.permeability[np.int64(M.coarse.elements[i].volumes.global_id[np.int64(M.coarse.elements[i].volumes.all)])]
+    center = M.coarse.elements[i].volumes.center[np.int64(M.coarse.elements[i].volumes.all)]
+    coef = lil_matrix(num_elements_coarse, num_elements_coarse)
     for b in range(num_elements_coarse):
         adjacencies = adj[b] # Array de IDs locais
         for c in range(len(adjacencies)):
-            id = np.array( [adjacencies[c]],  dtype= np.int)
-            coef[b,id] = equiv_perm(perm[b], perm[id])/1
+            id = np.array( [adjacencies[c]],  dtype= np.int64)
+            coef[b,id[0]] = equiv_perm(perm[b], perm[id])/1
         coef[b,b] = (-1)*coef[b].sum()
     end = time.time()
     print("This step lasted {0}s".format(end-start))
