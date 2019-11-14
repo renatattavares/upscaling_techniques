@@ -41,10 +41,10 @@ class local_upscaling:
         """
         Must return a mesh with boundary conditions set in the specific given volume
         """
-        return print('Fixed constant pressure boundary condition applied')
+        print('Fixed constant pressure boundary condition applied')
 
     def fixed_linear_pressure(self):
-        return 'Fixed linear pressure boundary condition applied'
+        print('Fixed linear pressure boundary condition applied')
 
     def periodic_pressure(self):
-        return 'Periodic pressure boundary condition applied'
+        print('Periodic pressure boundary condition applied')
