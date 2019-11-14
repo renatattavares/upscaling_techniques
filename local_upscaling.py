@@ -2,7 +2,7 @@
 Module of local upscaling technique in structured tridimensional meshes
 """
 
-from import_impress import preprocessor
+#from import_impress import preprocessor
 import numpy as np
 
 class local_upscaling:
@@ -18,13 +18,33 @@ class local_upscaling:
     -> Assembly of global coarse problem
     -> Solve global coarse problem
         """
-        pass
 
-    def set_boundary_conditions(self):
-        pass
+
+    def set_boundary_conditions(self, boundary_condition_type):
+        """
+        Indicates which function must be executed to set boundary condition on the mesh acording to the option informed.
+        """
+
+        self.boundary_conditions = {
+            'fixed constant pressure': self.fixed_constant_pressure(),
+            'fixed linear pressure': self.fixed_linear_pressure(),
+            'periodic pressure': self.periodic_pressure()
+            }
 
     def assembly(self):
         pass
 
     def solver(self):
         pass
+
+    def fixed_constant_pressure(self):
+        """
+        Must return a mesh with boundary conditions set in the specific given volume
+        """
+        return print('Fixed constant pressure boundary condition applied')
+
+    def fixed_linear_pressure(self):
+        return 'Fixed linear pressure boundary condition applied'
+
+    def periodic_pressure(self):
+        return 'Periodic pressure boundary condition applied'
