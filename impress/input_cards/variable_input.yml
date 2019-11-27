@@ -6,23 +6,16 @@
 # data format must be a string
 # level must be an integer
 
-weight:
-  type: volumes
-  data size: 3
-  data type: float
-  sparse: False
-  level: 0
-
-flux:
-  type: faces
-  data size: 3
-  data type: int
-  sparse: False
-  level: 1
-
 pressure:
   type: volumes
   data size: 1
   data type: int
+  sparse: False
+  level: 0
+
+coarse_pressure:
+  type: volumes
+  data size: 1
+  data type: float
   sparse: False
   level: 1
