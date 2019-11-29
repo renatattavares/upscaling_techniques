@@ -31,14 +31,19 @@ class LocalUpscaling:
         self.get_coarse_informations()
         print('Coarsening informations accessed')
 
-        # Setting class variables
+        # Setting variables
         self.boundary_condition_type = boundary_condition_type
+        self.coarse = self.mesh.coarse
+
+        # Setting boundary conditions
+        self.set_boundary_conditions('x')
 
 
-    def set_boundary_conditions(self):
+    def set_boundary_conditions(self, direction):
         """
             Indicates which function must be executed to set boundary condition on the mesh acording to the option informed.
         """
+        self.direction = direction
         self.boundary_conditions = {
             1: 'self.fixed_constant_pressure()', # Fixed constant pressure
             2: 'self.fixed_linear_pressure()',   # Fixed linear pressure
@@ -64,8 +69,18 @@ class LocalUpscaling:
     def fixed_constant_pressure(self):
         """
         Must return a mesh with boundary conditions set in the specific given volume
+
+        Development using IMPRESS' internal methods iface_neighbors and interfaces_faces -> Incomplete! 
         """
-        
+        aux = self.coarse.elements
+
+        # Z direction
+        #for i in range(len(aux)):
+        #    for j in range(self.ny*self.nz):
+        #        self.mesh.pressure[aux[i].volumes.global_id[aux[i].volumes.all[j+4]]] = 1000
+        #    self.mesh.pressure[i] = 1000
+
+
         print('Fixed constant pressure boundary condition applied')
 
     def fixed_linear_pressure(self):

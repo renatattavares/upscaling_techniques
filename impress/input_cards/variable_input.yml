@@ -9,7 +9,7 @@
 pressure:
   type: volumes
   data size: 1
-  data type: int
+  data type: float
   sparse: False
   level: 0
 
@@ -19,3 +19,10 @@ coarse_pressure:
   data type: float
   sparse: False
   level: 1
+
+test:
+  type: faces
+  data size: 1
+  data type: float
+  sparse: False
+  level: 0
