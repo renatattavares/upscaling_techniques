@@ -1,8 +1,8 @@
 """
 Module of extended-local upscaling technique in structured tridimensional meshes
 """
-import time
-import numpy as np
+#import time
+#import numpy as np
 
 class ExtendedLocalUpscaling(LocalUpscaling):
 

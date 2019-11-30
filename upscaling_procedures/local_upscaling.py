@@ -31,7 +31,8 @@ class LocalUpscaling:
         self.boundary_condition_type = boundary_condition_type
         self.coarse = self.mesh.coarse
         self.number_coarse_volumes = len(self.coarse.elements)
-            # Coordinate System
+
+        # Coordinate System
         self.x = np.array([1,0,0]);
         self.y = np.array([0,1,0]);
         self.z = np.array([0,0,1]);
