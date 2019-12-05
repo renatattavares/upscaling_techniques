@@ -44,12 +44,13 @@ class LocalUpscaling:
         self.get_coarse_centers()
 
         # Setting boundary conditions
-        self.set_boundary_conditions('x')
+        self.set_boundary_conditions('x', 0)
 
-    def set_boundary_conditions(self, direction):
+    def set_boundary_conditions(self, direction, local_problem):
         """
             Indicates which function must be executed to set boundary condition on the mesh acording to the option informed.
         """
+        self.local_problem = local_problem
         self.direction = direction
 
         self.directions = {
@@ -67,6 +68,8 @@ class LocalUpscaling:
         self.direction = self.directions.get(self.direction)
 
         self.bc = self.boundary_conditions.get(self.boundary_condition_type, "\nprint('Invalid boundary condition')")
+
+        self.get_coarse_neighbors()
 
         exec(self.bc)
 
@@ -86,15 +89,24 @@ class LocalUpscaling:
         """
         Must return a mesh with boundary conditions set in the specific given volume
         """
-        self.neighbors = self.get_coarse_neighbor()
+        self.neighbors = np.amax(self.correct_neighbors, axis = 1)
 
-        for i in range(self.number_coarse_volumes):
-                coarse_neighbors = self.coarse.iface_neighbors(i)[0]
-                coarse_faces = self.coarse.iface_neighbors(i)[1]
-                boundary_element = np.isin(coarse_neighbors, self.neighbors[i])
-                index = np.where(boundary_element == True)
-                interface = coarse_face[index]
-                faces = self.coarse.interfaces_faces[interface]
+        coarse_neighbors = self.coarse.iface_neighbors(self.local_problem)[0]
+        coarse_faces = self.coarse.iface_neighbors(self.local_problem)[1]
+        boundary_element = np.isin(coarse_neighbors, self.neighbors[self.local_problem])
+        index = np.where(boundary_element == True)
+        interface = coarse_faces[index]
+        faces = self.coarse.interfaces_faces[interface]
+
+        adj_volumes = self.mesh.faces.bridge_adjacencies(faces,2,3)
+        adj_volumes = np.concatenate(adj_volumes, axis = 0)
+        adj_volumes = np.unique(adj_volumes)
+        fine_volumes = self.coarse.elements[self.local_problem].volumes.father_id[:]
+        correct_volumes = np.isin(fine_volumes, adj_volumes)
+        index =  np.where(correct_volumes == True)
+        volumes = adj_volumes[index]
+
+        self.mesh.pressure[volumes] = 1000
         print('Fixed constant pressure boundary condition applied')
 
     def fixed_linear_pressure(self):
@@ -147,9 +159,9 @@ class LocalUpscaling:
 
         print('\nCoarse volume centers calculated')
 
-    def get_coarse_neighbor(self):
+    def get_coarse_neighbors(self):
 
-        self.correct_neighbor = np.zeros((self.number_coarse_volumes, 2))
+        self.correct_neighbors = np.zeros((self.number_coarse_volumes, 2))
 
         for i in range(self.number_coarse_volumes):
             neighbors = self.coarse.elements[i].faces.coarse_neighbors
@@ -163,11 +175,9 @@ class LocalUpscaling:
                 pv = np.cross(vector, self.direction)
 
                 if np.linalg.norm(pv) == 0:
-                    if self.correct_neighbor[i,0] == 0:
-                        self.correct_neighbor[i,0] = j
+                    if self.correct_neighbors[i,0] == 0:
+                        self.correct_neighbors[i,0] = j
                     else:
-                        self.correct_neighbor[i,1] = j
+                        self.correct_neighbors[i,1] = j
 
-        self.correct_neighbors = np.amax(self.correct_neighbor, axis = 1)
-
-        return self.correct_neighbors
+        print('\nCoarse neighbors defined')
