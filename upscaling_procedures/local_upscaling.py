@@ -33,9 +33,9 @@ class LocalUpscaling:
         self.number_coarse_volumes = len(self.coarse.elements)
 
         # Coordinate System
-        self.x = np.array([1,0,0]);
-        self.y = np.array([0,1,0]);
-        self.z = np.array([0,0,1]);
+        self.x = np.array([1,0,0])
+        self.y = np.array([0,1,0])
+        self.z = np.array([0,0,1])
 
         # Coarsening informations
         self.coarse_config = coarse_config()
@@ -44,13 +44,13 @@ class LocalUpscaling:
         self.get_coarse_centers()
 
         # Setting boundary conditions
-        self.set_boundary_conditions('x', 0)
+        self.set_boundary_conditions('x')
 
-    def set_boundary_conditions(self, direction, local_problem):
+    def set_boundary_conditions(self, direction):
         """
-            Indicates which function must be executed to set boundary condition on the mesh acording to the option informed.
+        Indicates which function must be executed to set boundary conditions acording to the option informed by the user.
         """
-        self.local_problem = local_problem
+
         self.direction = direction
 
         self.directions = {
@@ -73,8 +73,19 @@ class LocalUpscaling:
 
         exec(self.bc)
 
-    def assembly(self):
-        pass
+    def assembly_local_problem(self):
+
+        for i in range(self.number_coarse_volumes):
+            local_ids = self.coarse.elements[i].faces.internal
+            global_ids = self.coarse.elements[i].faces.father_id[local_ids]
+            neighbors = self.coarse.elements[i].faces.bridge_adjacencies(local_ids, 2, 3)
+            eq_permeability = 1 # Inserir como propriedade do IMPRESS
+            center = self.coarse.elements[i].volumes.center[neighbors]
+            dist = 0# Calcular a distância
+            coefficient = lil_matrix(self.number_coarse_volumes, self.number_coarse_volumes)
+
+            for b in range(local_ids):
+                coefficient = eq_permeability[b]/dist
 
     def solver(self):
         pass
@@ -91,22 +102,22 @@ class LocalUpscaling:
         """
         self.neighbors = np.amax(self.correct_neighbors, axis = 1)
 
-        coarse_neighbors = self.coarse.iface_neighbors(self.local_problem)[0]
-        coarse_faces = self.coarse.iface_neighbors(self.local_problem)[1]
-        boundary_element = np.isin(coarse_neighbors, self.neighbors[self.local_problem])
-        index = np.where(boundary_element == True)
-        interface = coarse_faces[index]
-        faces = self.coarse.interfaces_faces[interface]
+        for i in range(self.number_coarse_volumes):
+            coarse_neighbors = self.coarse.iface_neighbors(i)[0]
+            coarse_faces = self.coarse.iface_neighbors(i)[1]
+            boundary_element = np.isin(coarse_neighbors, self.neighbors[i])
+            index = np.where(boundary_element == True)[0]
+            interface = coarse_faces[index][0]
+            faces = self.coarse.interfaces_faces[interface.item()]
+            adj_volumes = self.mesh.faces.bridge_adjacencies(faces,2,3)
+            adj_volumes = np.concatenate(adj_volumes, axis = 0)
+            adj_volumes = np.unique(adj_volumes)
+            fine_volumes = self.coarse.elements[i].volumes.father_id[:]
+            correct_volumes = np.isin(fine_volumes, adj_volumes)
+            index =  np.where(correct_volumes == True)
+            correct_volumes = fine_volumes[index]
+            self.mesh.pressure[correct_volumes] = 1000
 
-        adj_volumes = self.mesh.faces.bridge_adjacencies(faces,2,3)
-        adj_volumes = np.concatenate(adj_volumes, axis = 0)
-        adj_volumes = np.unique(adj_volumes)
-        fine_volumes = self.coarse.elements[self.local_problem].volumes.father_id[:]
-        correct_volumes = np.isin(fine_volumes, adj_volumes)
-        index =  np.where(correct_volumes == True)
-        volumes = adj_volumes[index]
-
-        self.mesh.pressure[volumes] = 1000
         print('Fixed constant pressure boundary condition applied')
 
     def fixed_linear_pressure(self):
@@ -125,7 +136,7 @@ class LocalUpscaling:
 
     def get_coarse_informations(self):
         """
-        Access coarsening informations given to IMPRESS
+        Access coarsening informations given to IMPRESS.
         """
         self.nx = self.tree['nx']
         self.ny = self.tree['ny']
