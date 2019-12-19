@@ -45,6 +45,9 @@ class LocalUpscaling:
 
         # Setting boundary conditions
         self.set_boundary_conditions('x')
+        #for i in range(1):
+            #self.assembly = self.assembly_local_problem()
+
 
     def set_boundary_conditions(self, direction):
         """
@@ -75,17 +78,18 @@ class LocalUpscaling:
 
     def assembly_local_problem(self):
 
-        for i in range(self.number_coarse_volumes):
+        for i in range():
             local_ids = self.coarse.elements[i].faces.internal
             global_ids = self.coarse.elements[i].faces.father_id[local_ids]
             neighbors = self.coarse.elements[i].faces.bridge_adjacencies(local_ids, 2, 3)
             eq_permeability = 1 # Inserir como propriedade do IMPRESS
-            center = self.coarse.elements[i].volumes.center[neighbors]
-            dist = 0# Calcular a distância
+            center1 = self.coarse.elements[i].volumes.center[neighbors[:,0]]
+            center2 = self.coarse.elements[i].volumes.center[neighbors[:,1]]
+            dist = np.linalg.norm((center1-center2), axis = 1)
             coefficient = lil_matrix(self.number_coarse_volumes, self.number_coarse_volumes)
 
             for b in range(local_ids):
-                coefficient = eq_permeability[b]/dist
+                coefficient[] = eq_permeability/dist[b]
 
     def solver(self):
         pass
