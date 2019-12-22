@@ -89,7 +89,7 @@ class LocalUpscaling:
             coefficient = lil_matrix(self.number_coarse_volumes, self.number_coarse_volumes)
 
             for b in range(local_ids):
-                coefficient[] = eq_permeability/dist[b]
+                coefficient[1] = eq_permeability/dist[b]
 
     def solver(self):
         pass
