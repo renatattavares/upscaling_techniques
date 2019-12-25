@@ -7,141 +7,44 @@ import numpy as np
 class LocalUpscaling:
 
     def __init__(self, preprocessor, coarse_config, mesh_file = None, boundary_condition_type = None):
-        """
-            Steps of local upscaling:
 
-        -> Apply boundary conditions to local problems
-        -> Assembly of local problems
-        -> Solve local problems
-        -> Calculate upscaled permeability or upscaled transmissibility
-        -> Apply boundary conditions to global coarse problem
-        -> Assembly of global coarse problem
-        -> Solve global coarse problem
-        """
-
-        print('Local uscaling class initialized\n')
+        print('\n ##### Local upscaling class initialized ##### \n')
 
         # Preprocessing mesh with IMPRESS
+        print('\nPre-processing mesh with IMPRESS\n')
         start = time.time()
         self.mesh = preprocessor(mesh_file, dim = 3) # IMPRESS' object
         end = time.time()
-        print("\nThe preprocessing step lasted {0}s".format(end-start))
+        print("\nThe pre-processing step lasted {0}s\n".format(end-start))
 
         # Setting variables
-        self.boundary_condition_type = boundary_condition_type
+        print('\nAccessing coarsening informations from IMPRESS\n')
+        self.permeability = 1 # Inserir como propriedade do IMPRESS
         self.coarse = self.mesh.coarse
-        self.number_coarse_volumes = len(self.coarse.elements)
+        self.boundary_condition_type = boundary_condition_type
+        self.coarse_config = coarse_config() # Access IMPRESS' internal class
+        self.get_coarse_informations()
+        self.get_coarse_centers()
+        self.number_coarse_volumes = len(self.coarse.elements) # Number of volumes from the coarse mesh
+        self.number_volumes_local_problem = len(self.mesh.volumes)/(self.nx*self.ny*self.nz) # Number of fine scale volumes inside a coarse volume
 
         # Coordinate System
         self.x = np.array([1,0,0])
         self.y = np.array([0,1,0])
         self.z = np.array([0,0,1])
 
-        # Coarsening informations
-        self.coarse_config = coarse_config()
-        self.tree = self.coarse_config.tree['Simple']
-        self.get_coarse_informations()
-        self.get_coarse_centers()
+        # Assembly of local problems
+        print('\nAssembly of local problems in x direction\n')
+        self.transmissibility = self.assembly_local_problem()
 
-        # Setting boundary conditions
-        self.set_boundary_conditions('x')
-        #for i in range(1):
-            #self.assembly = self.assembly_local_problem()
-
-
-    def set_boundary_conditions(self, direction):
-        """
-        Indicates which function must be executed to set boundary conditions acording to the option informed by the user.
-        """
-
-        self.direction = direction
-
-        self.directions = {
-            'x': self.x,
-            'y': self.y,
-            'z': self.z
-            }
-
-        self.boundary_conditions = {
-            1: 'self.fixed_constant_pressure()', # Fixed constant pressure
-            2: 'self.fixed_linear_pressure()',   # Fixed linear pressure
-            3: 'self.periodic_pressure()'        # Periodic pressure
-            }
-
-        self.direction = self.directions.get(self.direction)
-
-        self.bc = self.boundary_conditions.get(self.boundary_condition_type, "\nprint('Invalid boundary condition')")
-
-        self.get_coarse_neighbors()
-
-        exec(self.bc)
-
-    def assembly_local_problem(self):
-
-        for i in range():
-            local_ids = self.coarse.elements[i].faces.internal
-            global_ids = self.coarse.elements[i].faces.father_id[local_ids]
-            neighbors = self.coarse.elements[i].faces.bridge_adjacencies(local_ids, 2, 3)
-            eq_permeability = 1 # Inserir como propriedade do IMPRESS
-            center1 = self.coarse.elements[i].volumes.center[neighbors[:,0]]
-            center2 = self.coarse.elements[i].volumes.center[neighbors[:,1]]
-            dist = np.linalg.norm((center1-center2), axis = 1)
-            coefficient = lil_matrix(self.number_coarse_volumes, self.number_coarse_volumes)
-
-            for b in range(local_ids):
-                coefficient[1] = eq_permeability/dist[b]
-
-    def solver(self):
-        pass
-
-    def upscaled_permeability(self):
-        pass
-
-    def upscaled_transmissibility(self):
-        pass
-
-    def fixed_constant_pressure(self):
-        """
-        Must return a mesh with boundary conditions set in the specific given volume
-        """
-        self.neighbors = np.amax(self.correct_neighbors, axis = 1)
-
-        for i in range(self.number_coarse_volumes):
-            coarse_neighbors = self.coarse.iface_neighbors(i)[0]
-            coarse_faces = self.coarse.iface_neighbors(i)[1]
-            boundary_element = np.isin(coarse_neighbors, self.neighbors[i])
-            index = np.where(boundary_element == True)[0]
-            interface = coarse_faces[index][0]
-            faces = self.coarse.interfaces_faces[interface.item()]
-            adj_volumes = self.mesh.faces.bridge_adjacencies(faces,2,3)
-            adj_volumes = np.concatenate(adj_volumes, axis = 0)
-            adj_volumes = np.unique(adj_volumes)
-            fine_volumes = self.coarse.elements[i].volumes.father_id[:]
-            correct_volumes = np.isin(fine_volumes, adj_volumes)
-            index =  np.where(correct_volumes == True)
-            correct_volumes = fine_volumes[index]
-            self.mesh.pressure[correct_volumes] = 1000
-
-        print('Fixed constant pressure boundary condition applied')
-
-    def fixed_linear_pressure(self):
-        """
-        Must return a mesh with boundary conditions set in the specific given volume
-        """
-
-        print('\nFixed linear pressure boundary condition applied')
-
-    def periodic_pressure(self):
-        """
-        Must return a mesh with boundary conditions set in the specific given volume
-        """
-
-        print('\nPeriodic pressure boundary condition applied')
+        # Upscaled permeability in x direction
+        # self.transmissibility, self.flux = self.set_boundary_conditions('x')
 
     def get_coarse_informations(self):
         """
         Access coarsening informations given to IMPRESS.
         """
+        self.tree = self.coarse_config.tree['Simple']
         self.nx = self.tree['nx']
         self.ny = self.tree['ny']
         self.nz = self.tree['nz']
@@ -174,6 +77,25 @@ class LocalUpscaling:
 
         print('\nCoarse volume centers calculated')
 
+    def assembly_local_problem(self):
+
+        for i in range(self.number_coarse_volumes):
+            self.i = i
+            self.local_ids = self.coarse.elements[i].faces.internal
+            global_ids = self.coarse.elements[i].faces.father_id[self.local_ids]
+            self.neighbors = self.coarse.elements[i].faces.bridge_adjacencies(self.local_ids, 2, 3)
+            center1 = self.coarse.elements[i].volumes.center[self.neighbors[:,0]]
+            center2 = self.coarse.elements[i].volumes.center[self.neighbors[:,1]]
+            dist = np.linalg.norm((center1 - center2), axis = 1)
+            self.coefficient = lil_matrix((int(self.local_problem_volumes), int(self.local_problem_volumes)), dtype = 'int')
+            face_normal = self.coarse.elements[i].faces.normal[self.local_ids]
+
+            for b in range(len(self.local_ids)):
+                self.coefficient[self.neighbors[b,0],self.neighbors[b,1]] = self.permeability/dist[b]
+                #self.coefficient[self.neighbors[b,1],self.neighbors[b,0]] = self.coefficient[self.neighbors[0],self.neighbors[1]]
+
+            self.coefficient[b,b] = (-1)*self.coefficient[i].sum()
+
     def get_coarse_neighbors(self):
 
         self.correct_neighbors = np.zeros((self.number_coarse_volumes, 2))
@@ -196,3 +118,80 @@ class LocalUpscaling:
                         self.correct_neighbors[i,1] = j
 
         print('\nCoarse neighbors defined')
+
+
+    def set_boundary_conditions(self, direction):
+        """
+        Indicates which function must be executed to set boundary conditions acording to the option informed by the user.
+        """
+
+        self.direction = direction
+
+        self.directions = {
+            'x': self.x,
+            'y': self.y,
+            'z': self.z
+            }
+
+        self.boundary_conditions = {
+            1: 'self.fixed_constant_pressure()', # Fixed constant pressure
+            2: 'self.fixed_linear_pressure()',   # Fixed linear pressure
+            3: 'self.periodic_pressure()'        # Periodic pressure
+            }
+
+        self.direction = self.directions.get(self.direction)
+
+        self.bc = self.boundary_conditions.get(self.boundary_condition_type, "\nprint('Invalid boundary condition')")
+
+        self.get_coarse_neighbors()
+
+        exec(self.bc)
+
+
+    def fixed_constant_pressure(self):
+        """
+        Must return a mesh with boundary conditions set in the specific given volume
+        """
+        self.neighbors = np.amax(self.correct_neighbors, axis = 1)
+
+        for i in range(self.number_coarse_volumes):
+            coarse_neighbors = self.coarse.iface_neighbors(i)[0]
+            coarse_faces = self.coarse.iface_neighbors(i)[1]
+            boundary_element = np.isin(coarse_neighbors, self.neighbors[i])
+            index = np.where(boundary_element == True)[0]
+            interface = coarse_faces[index][0]
+            faces = self.coarse.interfaces_faces[interface.item()]
+            adj_volumes = self.mesh.faces.bridge_adjacencies(faces,2,3)
+            adj_volumes = np.concatenate(adj_volumes, axis = 0)
+            adj_volumes = np.unique(adj_volumes)
+            fine_volumes = self.coarse.elements[i].volumes.father_id[:]
+            correct_volumes = np.isin(fine_volumes, adj_volumes)
+            index =  np.where(correct_volumes == True)
+            correct_volumes = fine_volumes[index]
+            self.mesh.pressure[correct_volumes] = 1000
+
+        print('Fixed constant pressure boundary condition applied')
+
+
+    def fixed_linear_pressure(self):
+        """
+        Must return a mesh with boundary conditions set in the specific given volume
+        """
+
+        print('\nFixed linear pressure boundary condition applied')
+
+    def periodic_pressure(self):
+        """
+        Must return a mesh with boundary conditions set in the specific given volume
+        """
+
+        print('\nPeriodic pressure boundary condition applied')
+
+    def solver(self):
+        pass
+
+    def upscaled_permeability(self):
+        pass
+
+    def upscaled_transmissibility(self):
+        pass
