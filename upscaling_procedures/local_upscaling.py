@@ -3,39 +3,46 @@ Module of local upscaling technique in structured tridimensional meshes
 """
 import time
 import numpy as np
+import xlsxwriter
+from scipy.sparse import lil_matrix
+#from scipy.sparse.linalg import spsolve
 
 class LocalUpscaling:
 
     def __init__(self, preprocessor, coarse_config, mesh_file = None, boundary_condition_type = None):
 
-        print('\n ##### Local upscaling class initialized ##### \n')
+        print('\n##### Local upscaling class initialized #####')
 
         # Preprocessing mesh with IMPRESS
-        print('\nPre-processing mesh with IMPRESS\n')
+        print('\nPre-processing mesh with IMPRESS')
         start = time.time()
         self.mesh = preprocessor(mesh_file, dim = 3) # IMPRESS' object
         end = time.time()
-        print("\nThe pre-processing step lasted {0}s\n".format(end-start))
+        print("\nThe pre-processing step lasted {0}s".format(end-start))
 
         # Setting variables
-        print('\nAccessing coarsening informations from IMPRESS\n')
+        print('\nAccessing coarsening informations from IMPRESS')
         self.permeability = 1 # Inserir como propriedade do IMPRESS
         self.coarse = self.mesh.coarse
         self.boundary_condition_type = boundary_condition_type
         self.coarse_config = coarse_config() # Access IMPRESS' internal class
         self.get_coarse_informations()
-        self.get_coarse_centers()
         self.number_coarse_volumes = len(self.coarse.elements) # Number of volumes from the coarse mesh
         self.number_volumes_local_problem = len(self.mesh.volumes)/(self.nx*self.ny*self.nz) # Number of fine scale volumes inside a coarse volume
+        self.get_coarse_centers()
 
         # Coordinate System
+        print('\nSetting coordinates system')
         self.x = np.array([1,0,0])
         self.y = np.array([0,1,0])
         self.z = np.array([0,0,1])
 
         # Assembly of local problems
-        print('\nAssembly of local problems in x direction\n')
+        print('\nAssembly of local problems in x direction')
+        start = time.time()
         self.transmissibility = self.assembly_local_problem()
+        end = time.time()
+        print("\nThe assembly lasted {0}s".format(end-start))
 
         # Upscaled permeability in x direction
         # self.transmissibility, self.flux = self.set_boundary_conditions('x')
@@ -53,7 +60,7 @@ class LocalUpscaling:
 
     def get_coarse_centers(self):
         """
-        Calculates the center of a coarse volume and stores it in a IMPRESS variable coarse_center
+        Calculates the center of a coarse volume and stores it in a IMPRESS variable called coarse_center
         """
         for i in range(self.number_coarse_volumes):
             coords = self.coarse.elements[i].nodes.coords[:]
@@ -78,23 +85,30 @@ class LocalUpscaling:
         print('\nCoarse volume centers calculated')
 
     def assembly_local_problem(self):
+        """
+        Assembly of local problems to generate the transmissibility matrix
+        """
 
         for i in range(self.number_coarse_volumes):
-            self.i = i
-            self.local_ids = self.coarse.elements[i].faces.internal
-            global_ids = self.coarse.elements[i].faces.father_id[self.local_ids]
-            self.neighbors = self.coarse.elements[i].faces.bridge_adjacencies(self.local_ids, 2, 3)
-            center1 = self.coarse.elements[i].volumes.center[self.neighbors[:,0]]
-            center2 = self.coarse.elements[i].volumes.center[self.neighbors[:,1]]
-            dist = np.linalg.norm((center1 - center2), axis = 1)
-            self.coefficient = lil_matrix((int(self.local_problem_volumes), int(self.local_problem_volumes)), dtype = 'int')
-            face_normal = self.coarse.elements[i].faces.normal[self.local_ids]
+            local_ids = self.coarse.elements[i].faces.internal # Local IDs from the internal faces from a coarse volume
+            global_ids = self.coarse.elements[i].faces.father_id[local_ids] # Global IDs from the internal faces from a coarse volume
+            face_neighbors = self.coarse.elements[i].faces.bridge_adjacencies(local_ids, 2, 3) # Local IDs from both the neighbors from each of the internal faces
+            first_neighbors_centers = self.coarse.elements[i].volumes.center[face_neighbors[:,0]] # Consult centers from the first column of the face's neighbors
+            second_neighbors_centers = self.coarse.elements[i].volumes.center[face_neighbors[:,1]] # Consult centers from the second column of the face's neighbors
+            centers_distance = np.linalg.norm((first_neighbors_centers - second_neighbors_centers), axis = 1) #Calculates the distante between the face's neighbors centers
+            self.transmissibility = lil_matrix((int(self.number_volumes_local_problem), int(self.number_volumes_local_problem)), dtype = 'float')
+            face_normal = self.coarse.elements[i].faces.normal[local_ids]
 
-            for b in range(len(self.local_ids)):
-                self.coefficient[self.neighbors[b,0],self.neighbors[b,1]] = self.permeability/dist[b]
-                #self.coefficient[self.neighbors[b,1],self.neighbors[b,0]] = self.coefficient[self.neighbors[0],self.neighbors[1]]
+            for j in range(len(local_ids)):
+                self.id1 = int(face_neighbors[j,0]) # ID of the first neighbor from the face
+                self.id2 = int(face_neighbors[j,1]) # ID of the second neighbor from the face
+                self.transmissibility[self.id1,self.id2] += self.permeability/centers_distance[j]
+                self.transmissibility[self.id2,self.id1] += self.permeability/centers_distance[j]
 
-            self.coefficient[b,b] = (-1)*self.coefficient[i].sum()
+            lil_matrix.setdiag(self.transmissibility,(-1)*self.transmissibility.sum(axis = 1))
+
+        return self.transmissibility
+
 
     def get_coarse_neighbors(self):
 
