@@ -26,3 +26,17 @@ coarse_center:
   data type: float
   sparse: False
   level: 1
+
+transmissibility:
+  type: volumes
+  data size: 4096
+  data type: float
+  sparse: True
+  level: 1
+
+source:
+  type: volumes
+  data size: 64
+  data type: float
+  sparse: True
+  level: 1
