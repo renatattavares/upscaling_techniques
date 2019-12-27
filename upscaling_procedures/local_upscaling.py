@@ -5,7 +5,7 @@ import time
 import numpy as np
 import xlsxwriter
 from scipy.sparse import lil_matrix
-#from scipy.sparse.linalg import spsolve
+from scipy.sparse.linalg import spsolve
 
 class LocalUpscaling:
 
@@ -18,10 +18,10 @@ class LocalUpscaling:
         start = time.time()
         self.mesh = preprocessor(mesh_file, dim = 3) # IMPRESS' object
         end = time.time()
-        print("\nThe pre-processing step lasted {0}s".format(end-start))
+        print("\nThis step lasted {0}s".format(end-start))
 
         # Setting variables
-        print('\nAccessing coarsening informations from IMPRESS')
+        print('\nAccessing coarsening informations from IMPRESS...')
         self.permeability = 1 # Inserir como propriedade do IMPRESS
         self.coarse = self.mesh.coarse
         self.boundary_condition_type = boundary_condition_type
@@ -32,7 +32,7 @@ class LocalUpscaling:
         self.get_coarse_centers()
 
         # Coordinate System
-        print('\nSetting coordinates system')
+        print("Setting coordinates system...")
         self.x = np.array([1,0,0])
         self.y = np.array([0,1,0])
         self.z = np.array([0,0,1])
@@ -42,11 +42,21 @@ class LocalUpscaling:
         start = time.time()
         self.transmissibility = self.assembly_local_problem()
         end = time.time()
-        print("\nThe assembly lasted {0}s".format(end-start))
+        print("\nThis step lasted {0}s".format(end-start))
 
         # Upscaled permeability in x direction
         print("\nSetting boundary conditions")
+        start = time.time()
         self.set_boundary_conditions('x')
+        end = time.time()
+        print("\nThis step lasted {0}s".format(end-start))
+
+        # Solve local problems
+        print('\nSolving local problems\n')
+        start = time.time()
+        #self.solve_local_problems()
+        end = time.time()
+        print("\nThis step lasted {0}s".format(end-start))
 
     def get_coarse_informations(self):
         """
@@ -159,28 +169,14 @@ class LocalUpscaling:
             self.coarse.elements[i].transmissibility[self.correct_volumes_local_ids] = 0
             self.coarse.elements[i].transmissibility[self.correct_volumes_local_ids, self.correct_volumes_local_ids] = 1
             self.coarse.elements[i].source = lil_matrix((int(self.number_volumes_local_problem), 1), dtype = 'float')
-            self.coarse.elements[i].source[self.correct_volumes_local_ids] = 1
+            self.coarse.elements[i].source[self.correct_volumes_local_ids] = 500
 
         print('\nFixed constant pressure boundary condition applied')
-
-    def fixed_linear_pressure(self):
-        """
-        Must return a mesh with boundary conditions set in the specific given volume
-        """
-
-        print('\nFixed linear pressure boundary condition applied')
-
-    def periodic_pressure(self):
-        """
-        Must return a mesh with boundary conditions set in the specific given volume
-        """
-
-        print('\nPeriodic pressure boundary condition applied')
 
     def get_coarse_neighbors(self):
 
         self.top_bottom_neighbors = np.zeros((self.number_coarse_volumes, 2))
-        self.side_neighbors = np.zeros((self.number_coarse_volumes, 2))
+        self.side_neighbors = np.zeros((self.number_coarse_volumes, 4))
 
         for i in range(self.number_coarse_volumes):
             coarse_neighbors = self.coarse.elements[i].faces.coarse_neighbors # Coarse neighbors
@@ -203,21 +199,44 @@ class LocalUpscaling:
                     else:
                         self.top_bottom_neighbors[i,1] = j
 
-                if np.linalg.norm(cross_product) == distance_norm:
+                if np.linalg.norm(cross_product) == distance_norm || np.linalg.norm(cross_product) == -distance_norm:
                     if self.side_neighbors[i,0] == 0:
                         self.side_neighbors[i,0] = j
-                    else:
+                    elif self.side_neighbors[i,1] == 0:
                         self.side_neighbors[i,1] = j
+                    elif self.side_neighbors[i,2] == 0:
+                        self.side_neighbors[i,2] == j
+                    elif self.side_neighbors[i,3] == 0:
+                        self.side_neighbors[i,3] == j
 
         print('\nCoarse neighbors defined')
 
         return self.top_bottom_neighbors, self.side_neighbors
 
-    def solver(self):
-        pass
+    def solve_local_problems(self):
+
+        for i in range(self.number_coarse_volumes):
+            print("Solving local problem of coarse volume {0}".format(i))
+            transmissibility = lil_matrix.tocsr(self.coarse.elements[i].transmissibility)
+            source = lil_matrix.tocsr(self.coarse.elements[i].source)
+            self.coarse.elements[i].coarse_pressure = spsolve(transmissibility,source)
 
     def upscaled_permeability(self):
         pass
 
     def upscaled_transmissibility(self):
         pass
+
+    def fixed_linear_pressure(self):
+        """
+        Must return a mesh with boundary conditions set in the specific given volume
+        """
+
+        print('\nFixed linear pressure boundary condition applied')
+
+    def periodic_pressure(self):
+        """
+        Must return a mesh with boundary conditions set in the specific given volume
+        """
+
+        print('\nPeriodic pressure boundary condition applied')
