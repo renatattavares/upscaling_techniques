@@ -47,7 +47,8 @@ class LocalUpscaling:
         # Upscaled permeability in x direction
         print("\nSetting boundary conditions")
         start = time.time()
-        self.get_coarse_neighbors()
+        # self.direction = self.x
+        # self.top_bottom_volumes()
         #self.set_boundary_conditions('x')
         end = time.time()
         print("\nThis step lasted {0}s".format(end-start))
@@ -146,22 +147,25 @@ class LocalUpscaling:
         """
         Must return a mesh, a transmissibility and a source/sink matrix with boundary conditions set.
         """
-        correct_volumes, group_1, group_2 = self.get_correct_volumes_and_separate_faces()
+        correct_volumes_group_1, correct_volumes_group_2 = self.get_correct_volumes_and_separate_faces()
 
         for i in range(self.number_coarse_volumes):
-            self.correct_volumes_local_ids = self.correct_volumes_local_ids[i]
-            #self.coarse.elements[i].transmissibility[self.correct_volumes_local_ids] = 0
-            #self.coarse.elements[i].transmissibility[self.correct_volumes_local_ids, self.correct_volumes_local_ids] = 1
-            #self.coarse.elements[i].source = lil_matrix((int(self.number_volumes_local_problem), 1), dtype = 'float')
-            #self.coarse.elements[i].source[self.correct_volumes_local_ids] = 500
+            self.coarse.elements[i].transmissibility[correct_volumes_group_1] = 0
+            self.coarse.elements[i].transmissibility[correct_volumes_group_2] = 0
+            self.coarse.elements[i].transmissibility[correct_volumes_group_1, correct_volumes_group_1] = 1
+            self.coarse.elements[i].transmissibility[correct_volumes_group_2, correct_volumes_group_2] = 1
+            self.coarse.elements[i].source = lil_matrix((int(self.number_volumes_local_problem), 1), dtype = 'float')
+            self.coarse.elements[i].source[correct_volumes_group_1] = 500
+            self.coarse.elements[i].source[correct_volumes_group_2] = 0
 
         print('\nFixed constant pressure boundary condition applied')
 
-    def get_correct_volumes_and_separate_faces(self):
+    def top_bottom_volumes(self):
 
-        correct_volumes = np.zeros((self.number_coarse_volumes,50), dtype = int)
-        group_1 = np.zeros((self.number_coarse_volumes, 25), dtype = int)
-        group_2 = np.zeros((self.number_coarse_volumes, 25), dtype = int)
+        ########################## BAD DEFINITION ##########################
+        correct_volumes_group_1 = np.zeros((self.number_coarse_volumes,50), dtype = int)
+        correct_volumes_group_2 = np.zeros((self.number_coarse_volumes,50), dtype = int)
+        ####################################################################
 
         for i in range(self.number_coarse_volumes):
             boundary_faces = self.coarse.elements[i].faces.boundary # Local IDs of boundary faces of a coarse volume
@@ -177,29 +181,31 @@ class LocalUpscaling:
             correct_faces = np.isin(norm_cross_product, 0)
             index_correct_faces = np.where(correct_faces == True)[0]
             correct_faces = boundary_faces[index_correct_faces]
-            adjacent_volumes = self.coarse.elements[i].faces.bridge_adjacencies(correct_faces, 2, 3)
-            correct_volumes[i] = adjacent_volumes
 
             # Separate faces in two groups
-            global_ids_correct_faces = self.coarse.elements[i].faces.global_ids[correct_faces]
+            global_ids_correct_faces = self.coarse.elements[i].faces.global_id[correct_faces]
             interface_coarse_face_id = self.coarse.iface_neighbors(i)[1]
 
             for j in range(interface_coarse_face_id):
                 interface_faces = self.coarse.elements[i].interface_faces[j]
                 verify = np.any(np.isin(interface_faces, global_ids_correct_faces[0]))
                 if verify == True:
-                    group_1[i] = np.isin(interface_faces, global_ids_correct_faces)
+                    group_1 = np.isin(interface_faces, global_ids_correct_faces)
                     index = np.where(group_1 == True)
-                    group_1[i] = interface_faces[index]
+                    group_1 = interface_faces[index]
                     break
 
-            group_2[i] = np.isin(global_ids_correct_faces, group_1)
+            group_2 = np.isin(global_ids_correct_faces, group_1)
             index = np.where(group_2 == True)
-            group_2[i] = global_ids_correct_faces[index]
+            group_2 = global_ids_correct_faces[index]
 
-        print('\nCoarse neighbors defined')
+            adjacent_volumes_group_1 = self.coarse.elements[i].faces.bridge_adjacencies(group_1, 2, 3)
+            correct_volumes_group_1[i] = adjacent_volumes_group_1
 
-        return correct_volumes, group_1, group_2
+            adjacent_volumes_group_2 = self.coarse.elements[i].faces.bridge_adjacencies(group_2, 2, 3)
+            correct_volumes_group_2[i] = adjacent_volumes_group_2
+
+        return correct_volumes_group_1, correct_volumes_group_2
 
     def solve_local_problems(self):
 
