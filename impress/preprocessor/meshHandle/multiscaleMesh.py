@@ -265,6 +265,11 @@ class MultiscaleCoarseGrid(object):
         return indices, tmp[indices].astype(int)
 
     def father_to_local_id(self, vec_range,  element, target):
+        """
+        vec_range -> Local IDs of the entities
+        element -> Type of entity you're searching for
+        target -> Number of the coarse volume
+        """
         flag = self.num[element]
         vec = self.create_range_vec(vec_range)
         if flag == 0:
@@ -276,6 +281,7 @@ class MultiscaleCoarseGrid(object):
         elif flag == 3:
             handle = self.range_index(vec, self._all_volumes)
         return self.mb.tag_get_data(self.local_volumes_tag[target],handle)
+
 
     def neighbours(self, x,y, element):
           flag = self.num[element]
