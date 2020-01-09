@@ -18,13 +18,20 @@ class LocalUpscaling:
         -> Apply boundary conditions to global coarse problem
         -> Solve global coarse problem
         """
-        lp = local_problems_object(preprocessor, coarse_config, mesh_file, boundary_condition_type)
+        print("\n########## Local upscaling class initialized ##########")
+        self.lp = local_problems_object(preprocessor, coarse_config, mesh_file, boundary_condition_type)
+        self.mesh = self.lp.mesh
+        self.coarse = self.lp.coarse
+        self.number_volumes_local_problem = self.lp.number_volumes_local_problem
+        self.number_coarse_volumes = self.lp.number_coarse_volumes
+        self.permeability = self.lp.permeability
 
     def upscaled_permeability(self):
-        pass
+        """
+        It calculates the effective permeability of a coarse volume
+        """
 
-    def upscaled_transmissibility(self):
-        pass
+
 
     def assembly(self):
         pass

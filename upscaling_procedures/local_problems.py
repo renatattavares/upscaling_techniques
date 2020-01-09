@@ -11,7 +11,7 @@ class LocalProblems:
 
     def __init__(self, preprocessor, coarse_config, mesh_file = None, boundary_condition_type = None):
 
-        print('\n##### Local upscaling class initialized #####')
+        print('\n##### Treatment of local problems #####')
 
         # Preprocessing mesh with IMPRESS
         print('\nPre-processing mesh with IMPRESS...')
@@ -22,7 +22,9 @@ class LocalProblems:
 
         # Setting variables
         print('\nAccessing coarsening informations from IMPRESS and setting important variables...')
-        self.permeability = 1 # Inserir como propriedade do IMPRESS
+        self.mesh.permeability[:] = np.array([1, 1, 1]) # Diagonal permeability tensor -> [Kx, 0, 0] -> [Kx, Ky, Kz]
+                # [0, Ky, 0]
+                # [0, 0, Kz]
         self.coarse = self.mesh.coarse
         self.boundary_condition_type = boundary_condition_type
         self.coarse_config = coarse_config() # Access IMPRESS' internal class
@@ -32,6 +34,7 @@ class LocalProblems:
         self.x = np.array([1,0,0])
         self.y = np.array([0,1,0])
         self.z = np.array([0,0,1])
+        self.pressure_gradient = 500
 
         # Assembly of local problems
         print('\nAssembly of local problems in x direction...')
@@ -81,9 +84,12 @@ class LocalProblems:
             self.transmissibility = lil_matrix((int(self.number_volumes_local_problem), int(self.number_volumes_local_problem)), dtype = float)
             face_normal = self.coarse.elements[i].faces.normal[local_ids]
 
+            # CALCULATE EQUIVALENT PERMEABILITY!
+
             for j in range(len(local_ids)):
                 self.id1 = int(face_neighbors[j,0]) # ID of the first neighbor from the face
                 self.id2 = int(face_neighbors[j,1]) # ID of the second neighbor from the face
+                self.
                 self.transmissibility[self.id1,self.id2] += self.permeability/centers_distance[j]
                 self.transmissibility[self.id2,self.id1] += self.permeability/centers_distance[j]
 
@@ -134,7 +140,7 @@ class LocalProblems:
             self.coarse.elements[i].transmissibility[volumes_group_1, volumes_group_1] = 1
             self.coarse.elements[i].transmissibility[volumes_group_2, volumes_group_2] = 1
             self.coarse.elements[i].source = lil_matrix((int(self.number_volumes_local_problem), 1), dtype = 'float')
-            self.coarse.elements[i].source[volumes_group_1] = 500
+            self.coarse.elements[i].source[volumes_group_1] = self.pressure_gradient
             self.coarse.elements[i].source[volumes_group_2] = 0
 
         print('\nFixed constant pressure boundary condition applied')
