@@ -1,17 +1,15 @@
 """
 Module of local upscaling technique in structured tridimensional meshes
 """
-from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as impress
-from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
-from local_problems import LocalProblems
 import time
 import numpy as np
 
 class LocalUpscaling:
 
-    def __init__(self, local_problem_object):
+    def __init__(self, local_problems_object, preprocessor, coarse_config, mesh_file = None, boundary_condition_type = None):
         """
             Steps of local upscaling:
+
         -> Assembly of local problems OK
         -> Apply boundary conditions to local problems OK
         -> Solve local problems OK
@@ -20,7 +18,7 @@ class LocalUpscaling:
         -> Apply boundary conditions to global coarse problem
         -> Solve global coarse problem
         """
-        lp = local_problem_object(preprocessor = impress, coarse_config = coarse_config, mesh_file = 'mesh/25.h5m', boundary_condition_type = 1)
+        lp = local_problems_object(preprocessor, coarse_config, mesh_file, boundary_condition_type)
 
     def upscaled_permeability(self):
         pass
