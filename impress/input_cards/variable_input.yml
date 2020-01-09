@@ -33,3 +33,10 @@ source:
   data type: float
   sparse: True
   level: 1
+
+permeability:
+  type: volumes
+  data size: 3
+  data type: float
+  sparse: False
+  level: 0
