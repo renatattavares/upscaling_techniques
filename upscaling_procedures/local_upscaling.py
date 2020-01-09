@@ -71,32 +71,6 @@ class LocalUpscaling:
 
         print('\nCoarsening informations accessed')
 
-    def get_coarse_centers(self):
-        """
-        Calculates the center of a coarse volume and stores it in a IMPRESS variable called coarse_center
-        """
-        for i in range(self.number_coarse_volumes):
-            coords = self.coarse.elements[i].nodes.coords[:]
-            x_coords = coords[:,0]
-            y_coords = coords[:,1]
-            z_coords = coords[:,2]
-
-            xmax = x_coords.max()
-            ymax = y_coords.max()
-            zmax = z_coords.max()
-
-            xmin = x_coords.min()
-            ymin = y_coords.min()
-            zmin = z_coords.min()
-
-            x_center = xmin + (xmax-xmin)/2
-            y_center = ymin + (ymax-ymin)/2
-            z_center = zmin + (zmax-zmin)/2
-
-            self.coarse.elements[i].coarse_center[:] = np.array([x_center, y_center, z_center])
-
-        print('\nCoarse volume centers calculated')
-
     def assembly_local_problem(self):
         """
         Assembly of local problems to generate the transmissibility matrix
@@ -160,7 +134,81 @@ class LocalUpscaling:
 
         print('\nFixed constant pressure boundary condition applied')
 
+    def fixed_linear_pressure(self):
+        """
+        Must return a mesh with boundary conditions set in the specific given volume
+        """
+
+        print('\nFixed linear pressure boundary condition applied')
+
+    def periodic_pressure(self):
+        """
+        Must return a mesh with boundary conditions set in the specific given volume
+        """
+
+        print('\nPeriodic pressure boundary condition applied')
+
     def top_bottom_volumes(self):
+
+        ########################## BAD DEFINITION ##########################
+        correct_volumes_group_1 = np.zeros((self.number_coarse_volumes,50), dtype = int)
+        correct_volumes_group_2 = np.zeros((self.number_coarse_volumes,50), dtype = int)
+        ####################################################################
+
+        for i in range(self.number_coarse_volumes):
+            boundary_faces = self.coarse.elements[i].faces.boundary # Local IDs of boundary faces of a coarse volume
+            normal_boundary_faces = self.coarse.elements[i].faces.normal[boundary_faces] # Normal vector of boundary faces of a coarse volumes
+            direction_vector = np.ndarray(shape = np.shape(normal_boundary_faces), dtype = float)
+            direction_vector = np.full_like(direction_vector, self.direction) # Vectorization
+
+            # Cross product and norm
+            cross_product = np.cross(normal_boundary_faces, direction_vector)
+            norm_cross_product = np.linalg.norm(cross_product, axis = 1)
+
+            # Verify which norms are zero (if norm == 0, the face is perpendicular to the direction)
+            correct_faces = np.isin(norm_cross_product, 0)
+            index_correct_faces = np.where(correct_faces == True)[0]
+            correct_faces = boundary_faces[index_correct_faces]
+
+            # Separate faces in two groups
+            global_ids_correct_faces = self.coarse.elements[i].faces.global_id[correct_faces]
+            interface_coarse_face_id = self.coarse.iface_neighbors(i)[1]
+
+            for j in range(interface_coarse_face_id):
+                interface_faces = self.coarse.elements[i].interface_faces[j]
+                verify = np.any(np.isin(interface_faces, global_ids_correct_faces[0]))
+                if verify == True:
+                    group_1 = np.isin(interface_faces, global_ids_correct_faces)
+                    index = np.where(group_1 == True)
+                    group_1 = interface_faces[index]
+                    break
+
+            group_2 = np.isin(global_ids_correct_faces, group_1)
+            index = np.where(group_2 == True)
+            group_2 = global_ids_correct_faces[index]
+
+            adjacent_volumes_group_1 = self.coarse.elements[i].faces.bridge_adjacencies(group_1, 2, 3)
+            correct_volumes_group_1[i] = adjacent_volumes_group_1
+
+            adjacent_volumes_group_2 = self.coarse.elements[i].faces.bridge_adjacencies(group_2, 2, 3)
+            correct_volumes_group_2[i] = adjacent_volumes_group_2
+
+        return correct_volumes_group_1, correct_volumes_group_2
+
+    def side_volumes(self):
+
+        # Defining perpendicular directions
+        if self.direction == self.x:
+            self.perpendicular_direction_1 = self.y
+            self.perpendicular_direction_2 = self.z
+
+        elif self.direction == self.y:
+            self.perpendicular_direction_1 = self.x
+            self.perpendicular_direction_2 = self.z
+
+        elif self.direction == self.z:
+            self.perpendicular_direction_1 = self.x
+            self.perpendicular_direction_2 = self.y
 
         ########################## BAD DEFINITION ##########################
         correct_volumes_group_1 = np.zeros((self.number_coarse_volumes,50), dtype = int)
@@ -215,22 +263,9 @@ class LocalUpscaling:
             source = lil_matrix.tocsr(self.coarse.elements[i].source)
             self.coarse.elements[i].coarse_pressure = spsolve(transmissibility,source)
 
+    # Considering put this in another module
     def upscaled_permeability(self):
         pass
 
     def upscaled_transmissibility(self):
         pass
-
-    def fixed_linear_pressure(self):
-        """
-        Must return a mesh with boundary conditions set in the specific given volume
-        """
-
-        print('\nFixed linear pressure boundary condition applied')
-
-    def periodic_pressure(self):
-        """
-        Must return a mesh with boundary conditions set in the specific given volume
-        """
-
-        print('\nPeriodic pressure boundary condition applied')
