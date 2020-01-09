@@ -43,17 +43,14 @@ class LocalUpscaling:
         # Upscaled permeability in x direction
         print("\nSetting boundary conditions...")
         start = time.time()
-        self.direction = self.x
-        self.top_bottom_volumes()
-        print("rodou")
-        #self.set_boundary_conditions('x')
+        self.set_boundary_conditions('x')
         end = time.time()
         print("\nThis step lasted {0}s".format(end-start))
 
         # Solve local problems
         print('\nSolving local problems....\n')
         start = time.time()
-        #self.solve_local_problems()
+        self.solve_local_problems()
         end = time.time()
         print("\nThis step lasted {0}s".format(end-start))
 
@@ -109,15 +106,15 @@ class LocalUpscaling:
             }
 
         self.direction = directions_dictionary.get(direction) # Get the direction given
-        if self.direction == self.x:
+        if self.direction.all() == self.x.all():
             self.perpendicular_direction_1 = self.y
             self.perpendicular_direction_2 = self.z
 
-        elif self.direction == self.y:
+        elif self.direction.all() == self.y.all():
             self.perpendicular_direction_1 = self.x
             self.perpendicular_direction_2 = self.z
 
-        elif self.direction == self.z:
+        elif self.direction.all() == self.z.all():
             self.perpendicular_direction_1 = self.x
             self.perpendicular_direction_2 = self.y
 
@@ -125,39 +122,41 @@ class LocalUpscaling:
 
     def fixed_constant_pressure(self):
         """
-        Must return a mesh, a transmissibility and a source/sink matrix with boundary conditions set.
+        Function to apply fixed constant pressure boundary condition, it returns a transmissibility and a source/sink matrix modified.
         """
-        correct_volumes_group_1, correct_volumes_group_2 = self.get_correct_volumes_and_separate_faces()
+        correct_volumes_group_1, correct_volumes_group_2 = self.identify_top_bottom_volumes()
 
         for i in range(self.number_coarse_volumes):
-            self.coarse.elements[i].transmissibility[correct_volumes_group_1] = 0
-            self.coarse.elements[i].transmissibility[correct_volumes_group_2] = 0
-            self.coarse.elements[i].transmissibility[correct_volumes_group_1, correct_volumes_group_1] = 1
-            self.coarse.elements[i].transmissibility[correct_volumes_group_2, correct_volumes_group_2] = 1
+            volumes_group_1 = correct_volumes_group_1[i]
+            volumes_group_2 = correct_volumes_group_2[i]
+            self.coarse.elements[i].transmissibility[volumes_group_1] = 0
+            self.coarse.elements[i].transmissibility[volumes_group_2] = 0
+            self.coarse.elements[i].transmissibility[volumes_group_1, volumes_group_1] = 1
+            self.coarse.elements[i].transmissibility[volumes_group_2, volumes_group_2] = 1
             self.coarse.elements[i].source = lil_matrix((int(self.number_volumes_local_problem), 1), dtype = 'float')
-            self.coarse.elements[i].source[correct_volumes_group_1] = 500
-            self.coarse.elements[i].source[correct_volumes_group_2] = 0
+            self.coarse.elements[i].source[volumes_group_1] = 500
+            self.coarse.elements[i].source[volumes_group_2] = 0
 
         print('\nFixed constant pressure boundary condition applied')
 
     def fixed_linear_pressure(self):
         """
-        Must return a mesh with boundary conditions set in the specific given volume
+        Function to apply fixed linear pressure boundary condition, it returns a transmissibility and a source/sink matrix modified.
         """
 
         print('\nFixed linear pressure boundary condition applied')
 
     def periodic_pressure(self):
         """
-        Must return a mesh with boundary conditions set in the specific given volume
+        Function to apply periodic pressure boundary condition, it returns a transmissibility and a source/sink matrix modified.
         """
 
         print('\nPeriodic pressure boundary condition applied')
 
-    def top_bottom_volumes(self):
+    def identify_top_bottom_volumes(self):
         ########################## BAD DEFINITION ##########################
-        self.correct_volumes_group_1 = np.zeros((self.number_coarse_volumes,25), dtype = int)
-        self.correct_volumes_group_2 = np.zeros((self.number_coarse_volumes,25), dtype = int)
+        correct_volumes_group_1 = np.zeros((self.number_coarse_volumes,25), dtype = int)
+        correct_volumes_group_2 = np.zeros((self.number_coarse_volumes,25), dtype = int)
         ####################################################################
 
         for i in range(self.number_coarse_volumes):
@@ -205,13 +204,12 @@ class LocalUpscaling:
 
         return correct_volumes_group_1, correct_volumes_group_2
 
-    def side_volumes(self):
-
+    def identify_side_volumes(self):
         ########################## BAD DEFINITION ##########################
-        correct_volumes_group_1 = np.zeros((self.number_coarse_volumes,50), dtype = int)
-        correct_volumes_group_2 = np.zeros((self.number_coarse_volumes,50), dtype = int)
-        correct_volumes_group_3 = np.zeros((self.number_coarse_volumes,50), dtype = int)
-        correct_volumes_group_4 = np.zeros((self.number_coarse_volumes,50), dtype = int)
+        correct_volumes_group_1 = np.zeros((self.number_coarse_volumes,25), dtype = int)
+        correct_volumes_group_2 = np.zeros((self.number_coarse_volumes,25), dtype = int)
+        correct_volumes_group_3 = np.zeros((self.number_coarse_volumes,25), dtype = int)
+        correct_volumes_group_4 = np.zeros((self.number_coarse_volumes,25), dtype = int)
         ####################################################################
 
         for i in range(self.number_coarse_volumes):
@@ -263,11 +261,5 @@ class LocalUpscaling:
             print("Solving local problem of coarse volume {0}".format(i))
             transmissibility = lil_matrix.tocsr(self.coarse.elements[i].transmissibility)
             source = lil_matrix.tocsr(self.coarse.elements[i].source)
-            self.coarse.elements[i].coarse_pressure = spsolve(transmissibility,source)
-
-    # Considering put this in another module
-    def upscaled_permeability(self):
-        pass
-
-    def upscaled_transmissibility(self):
-        pass
+            global_id_volumes = self.coarse.elements[i].volumes.father_id[:]
+            self.mesh.pressure[global_id_volumes] = spsolve(transmissibility,source)

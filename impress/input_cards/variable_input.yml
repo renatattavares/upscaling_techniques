@@ -22,21 +22,14 @@ coarse_pressure:
 
 transmissibility:
   type: volumes
-  data size: 4096
+  data size: 15625
   data type: float
   sparse: True
   level: 1
 
 source:
   type: volumes
-  data size: 64
+  data size: 125
   data type: float
   sparse: True
-  level: 1
-
-test:
-  type: faces
-  data size: 1
-  data type: float
-  sparse: False
   level: 1
