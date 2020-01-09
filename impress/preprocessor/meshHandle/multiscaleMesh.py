@@ -123,11 +123,11 @@ class GetCoarseItem(object):
             start = item.start
             step = item.step
             stop = item.stop
-            if step == None:
+            if step is None:
                 step = 1
-            if start == None:
+            if start is None:
                 start = 0
-            if stop == None:
+            if stop is None:
                 stop = len(self.dic)
             array = np.array(range(start, stop, step))
             s = np.array([])
