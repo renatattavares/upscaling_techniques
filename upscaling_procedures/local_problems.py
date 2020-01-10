@@ -4,8 +4,10 @@ Module for treatment of local problems to apply local upscaling technique in str
 import time
 import numpy as np
 #import xlsxwriter
+import yaml
 from scipy.sparse import lil_matrix
 from scipy.sparse.linalg import spsolve
+
 
 class LocalProblems:
 
@@ -28,7 +30,7 @@ class LocalProblems:
         self.coarse = self.mesh.coarse
         self.boundary_condition_type = boundary_condition_type
         self.coarse_config = coarse_config() # Access IMPRESS' internal class
-        self.get_coarse_informations()
+        self.get_mesh_informations()
         self.number_coarse_volumes = len(self.coarse.elements) # Number of volumes from the coarse mesh
         self.number_volumes_local_problem = len(self.mesh.volumes)/(self.nx*self.ny*self.nz) # Number of fine scale volumes inside a coarse volume
         self.x = np.array([1,0,0])
@@ -52,13 +54,13 @@ class LocalProblems:
         print("\nThis step lasted {0}s".format(end-start))
 
         # Solve local problems
-        print('\nSolving local problems....\n')
+        print('\nSolving local problems...')
         start = time.time()
         self.solve_local_problems()
         end = time.time()
         print("\nThis step lasted {0}s".format(end-start))
 
-    def get_coarse_informations(self):
+    def get_mesh_informations(self, mesh_info_file = 'mesh_info.yml'):
         """
         Access coarsening informations given to IMPRESS.
         """
@@ -67,7 +69,14 @@ class LocalProblems:
         self.ny = self.tree['ny']
         self.nz = self.tree['nz']
 
-        print('\nCoarsening informations accessed')
+        with open(mesh_info_file, 'r') as file:
+            data = yaml.safe_load(file)
+
+        self.number_elements_x_direction = data['x']
+        self.number_elements_y_direction = data['y']
+        self.number_elements_z_direction = data['z']
+
+        print('\nMesh informations accessed')
 
     def assembly_local_problem(self):
         """
@@ -76,39 +85,38 @@ class LocalProblems:
 
         for i in range(self.number_coarse_volumes):
             print("Assembly of local problem {0}".format(i))
-            local_ids = self.coarse.elements[i].faces.internal # Local IDs from the internal faces from a coarse volume
-            global_ids = self.coarse.elements[i].faces.father_id[local_ids] # Global IDs from the internal faces from a coarse volume
-            face_neighbors = self.coarse.elements[i].faces.bridge_adjacencies(local_ids, 2, 3) # Local IDs from both the neighbors from each of the internal faces
-            first_neighbors_centers = self.coarse.elements[i].volumes.center[face_neighbors[:,0]] # Consult centers from the first column of the face's neighbors
-            second_neighbors_centers = self.coarse.elements[i].volumes.center[face_neighbors[:,1]] # Consult centers from the second column of the face's neighbors
+            internal_faces_local_ids = self.coarse.elements[i].faces.internal # Local IDs from the internal faces from a coarse volume
+            info = self.equivalent_permeability()
+
+
+
             centers_distance = np.linalg.norm((first_neighbors_centers - second_neighbors_centers), axis = 1) #Calculates the distante between the face's neighbors centers
             self.transmissibility = lil_matrix((int(self.number_volumes_local_problem), int(self.number_volumes_local_problem)), dtype = float)
-            face_normal = self.coarse.elements[i].faces.normal[local_ids]
-
-            # CALCULATE EQUIVALENT PERMEABILITY!
+            face_normal = self.coarse.elements[i].faces.normal[internal_faces_local_ids]
 
             for j in range(len(local_ids)):
                 self.id1 = int(face_neighbors[j,0]) # ID of the first neighbor from the face
                 self.id2 = int(face_neighbors[j,1]) # ID of the second neighbor from the face
-                equivalent_permeability = self.equivalent_permeability(i, self.id1, self.id2, global_ids[j])
-                self.transmissibility[self.id1,self.id2] += 1/centers_distance[j]
-                self.transmissibility[self.id2,self.id1] += 1/centers_distance[j]
+                equivalent_permeability = 1
+                self.transmissibility[self.id1,self.id2] += equivalent_permeability/centers_distance[j]
+                self.transmissibility[self.id2,self.id1] += equivalent_permeability/centers_distance[j]
 
             lil_matrix.setdiag(self.transmissibility,(-1)*self.transmissibility.sum(axis = 1))
             self.coarse.elements[i].transmissibility = self.transmissibility # Store transmissibility in a IMPRESS' variable
 
-    def equivalent_permeability(self, coarse_volume, volume_local_id_1, volume_local_id_2, face_global_id):
+    def equivalent_permeability(self, coarse_volume, internal_faces_local_ids):
         """
         Calculates the equivalent permeability of each internal face
         """
-        global_id_volume_1 = self.coarse.elements[coarse_volume].volumes.father_id[volume_local_id_1]
-        global_id_volume_2 = self.coarse.elements[coarse_volume].volumes.father_id[volume_local_id_2]
-        normal = self.mesh.faces.normal[face_global_id]
-        cross_product = np.cross(normal, self.system)
+        faces_normal = self.coarse.elements[coarse_volume].faces.normal[internal_faces_local_ids]
+
+
+        #Testing faces for x direction
+        cross_product = np.cross(self.x, faces_normal)
         norm_cross_product = np.linalg.norm(cross_product, axis = 1)
-        parallel_direction = np.where(norm_cross_product == 0)[0]
-        k1 = self.mesh.permeability[global_id_volume_1][parallel_direction]
-        k2 = self.mesh.permeability[global_id_volume_2][parallel_direction]
+        index_faces_x_direction = np.isin(norm_cross_product, 0)
+        faces_x_direction = internal_faces_local_ids[index_faces_x_direction]
+
         equivalent_permeability =(2*k1*k2)/(k1+k2)
 
         return equivalent_permeability
@@ -132,14 +140,17 @@ class LocalProblems:
         if self.direction.all() == self.x.all():
             self.perpendicular_direction_1 = self.y
             self.perpendicular_direction_2 = self.z
+            self.number_faces_coarse_face = int((self.number_elements_y_direction/self.ny)*(self.number_elements_z_direction/self.nz))
 
         elif self.direction.all() == self.y.all():
             self.perpendicular_direction_1 = self.x
             self.perpendicular_direction_2 = self.z
+            self.number_faces_coarse_face = int((self.number_elements_x_direction/self.nx)*(self.number_elements_z_direction/self.nz))
 
         elif self.direction.all() == self.z.all():
             self.perpendicular_direction_1 = self.x
             self.perpendicular_direction_2 = self.y
+            self.number_faces_coarse_face = int((self.number_elements_x_direction/self.ny)*(self.number_elements_y_direction/self.ny))
 
         boundary_conditions_dictionary.get(self.boundary_condition_type, "\nprint('Invalid boundary condition')")() # Execute the correct boundary condition function
 
@@ -178,9 +189,10 @@ class LocalProblems:
         print('\nPeriodic pressure boundary condition applied')
 
     def identify_top_bottom_volumes(self):
+
         ########################## BAD DEFINITION ##########################
-        correct_volumes_group_1 = np.zeros((self.number_coarse_volumes,25), dtype = int)
-        correct_volumes_group_2 = np.zeros((self.number_coarse_volumes,25), dtype = int)
+        correct_volumes_group_1 = np.zeros((self.number_coarse_volumes,self.number_faces_coarse_face), dtype = int)
+        correct_volumes_group_2 = np.zeros((self.number_coarse_volumes,self.number_faces_coarse_face), dtype = int)
         ####################################################################
 
         for i in range(self.number_coarse_volumes):
