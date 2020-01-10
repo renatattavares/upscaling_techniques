@@ -10,9 +10,6 @@ class LocalUpscaling:
         """
             Steps of local upscaling:
 
-        -> Assembly of local problems OK
-        -> Apply boundary conditions to local problems OK
-        -> Solve local problems OK
         -> Calculate upscaled permeability or upscaled transmissibility
         -> Assembly of global coarse problem
         -> Apply boundary conditions to global coarse problem
@@ -30,6 +27,7 @@ class LocalUpscaling:
         """
         It calculates the effective permeability of a coarse volume
         """
+        
 
 
 
