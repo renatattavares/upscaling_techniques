@@ -35,6 +35,7 @@ class LocalProblems:
         self.y = np.array([0,1,0])
         self.z = np.array([0,0,1])
         self.pressure_gradient = 500
+        self.system = np.array([self.x, self.y, self.z])
 
         # Assembly of local problems
         print('\nAssembly of local problems in x direction...')
@@ -89,12 +90,28 @@ class LocalProblems:
             for j in range(len(local_ids)):
                 self.id1 = int(face_neighbors[j,0]) # ID of the first neighbor from the face
                 self.id2 = int(face_neighbors[j,1]) # ID of the second neighbor from the face
-                self.
-                self.transmissibility[self.id1,self.id2] += self.permeability/centers_distance[j]
-                self.transmissibility[self.id2,self.id1] += self.permeability/centers_distance[j]
+                equivalent_permeability = self.equivalent_permeability(i, self.id1, self.id2, global_ids[j])
+                self.transmissibility[self.id1,self.id2] += 1/centers_distance[j]
+                self.transmissibility[self.id2,self.id1] += 1/centers_distance[j]
 
             lil_matrix.setdiag(self.transmissibility,(-1)*self.transmissibility.sum(axis = 1))
             self.coarse.elements[i].transmissibility = self.transmissibility # Store transmissibility in a IMPRESS' variable
+
+    def equivalent_permeability(self, coarse_volume, volume_local_id_1, volume_local_id_2, face_global_id):
+        """
+        Calculates the equivalent permeability of each internal face
+        """
+        global_id_volume_1 = self.coarse.elements[coarse_volume].volumes.father_id[volume_local_id_1]
+        global_id_volume_2 = self.coarse.elements[coarse_volume].volumes.father_id[volume_local_id_2]
+        normal = self.mesh.faces.normal[face_global_id]
+        cross_product = np.cross(normal, self.system)
+        norm_cross_product = np.linalg.norm(cross_product, axis = 1)
+        parallel_direction = np.where(norm_cross_product == 0)[0]
+        k1 = self.mesh.permeability[global_id_volume_1][parallel_direction]
+        k2 = self.mesh.permeability[global_id_volume_2][parallel_direction]
+        equivalent_permeability =(2*k1*k2)/(k1+k2)
+
+        return equivalent_permeability
 
     def set_boundary_conditions(self, direction):
         """

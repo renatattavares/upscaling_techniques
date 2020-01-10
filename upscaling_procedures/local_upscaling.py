@@ -24,7 +24,7 @@ class LocalUpscaling:
         self.coarse = self.lp.coarse
         self.number_volumes_local_problem = self.lp.number_volumes_local_problem
         self.number_coarse_volumes = self.lp.number_coarse_volumes
-        self.permeability = self.lp.permeability
+        #self.permeability = self.lp.permeability
 
     def upscaled_permeability(self):
         """
