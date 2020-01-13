@@ -21,15 +21,14 @@ class LocalUpscaling:
         self.coarse = self.lp.coarse
         self.number_volumes_local_problem = self.lp.number_volumes_local_problem
         self.number_coarse_volumes = self.lp.number_coarse_volumes
-        #self.permeability = self.lp.permeability
 
     def upscaled_permeability(self):
         """
         It calculates the effective permeability of a coarse volume
         """
-        
-
-
+        for i in range(len(self.number_coarse_volumes)):
+            # Direction x
+            print(i)
 
     def assembly(self):
         pass

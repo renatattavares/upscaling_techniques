@@ -45,15 +45,51 @@ class LocalProblems:
         self.assembly_local_problem()
         end = time.time()
         print("\nThis step lasted {0}s".format(end-start))
-
         # Upscaled permeability in x direction
         print("\nSetting boundary conditions...")
         start = time.time()
         self.set_boundary_conditions('x')
         end = time.time()
         print("\nThis step lasted {0}s".format(end-start))
+        # Solve local problems in x direction
+        print('\nSolving local problems...')
+        start = time.time()
+        self.solve_local_problems()
+        end = time.time()
+        print("\nThis step lasted {0}s".format(end-start))
 
-        # Solve local problems
+        # Assembly of local problems
+        print('\nAssembly of local problems in y direction...')
+        start = time.time()
+        self.assembly_local_problem()
+        end = time.time()
+        print("\nThis step lasted {0}s".format(end-start))
+        # Upscaled permeability in y direction
+        print("\nSetting boundary conditions...")
+        start = time.time()
+        self.set_boundary_conditions('y')
+        end = time.time()
+        print("\nThis step lasted {0}s".format(end-start))
+        # Solve local problems in y direction
+        print('\nSolving local problems...')
+        start = time.time()
+        self.solve_local_problems()
+        end = time.time()
+        print("\nThis step lasted {0}s".format(end-start))
+
+        # Assembly of local problems
+        print('\nAssembly of local problems in z direction...')
+        start = time.time()
+        self.assembly_local_problem()
+        end = time.time()
+        print("\nThis step lasted {0}s".format(end-start))
+        # Upscaled permeability in z direction
+        print("\nSetting boundary conditions...")
+        start = time.time()
+        self.set_boundary_conditions('z')
+        end = time.time()
+        print("\nThis step lasted {0}s".format(end-start))
+        # Solve local problems in z direction
         print('\nSolving local problems...')
         start = time.time()
         self.solve_local_problems()
@@ -143,7 +179,6 @@ class LocalProblems:
         permeability_sum = p1 + p2
         self.equivalent_permeability_y = 2*permeability_multiplication/permeability_sum
 
-
         # Testing faces for z direction
         cross_product = np.cross(self.z, faces_normal)
         norm_cross_product = np.linalg.norm(cross_product, axis = 1)
@@ -182,17 +217,17 @@ class LocalProblems:
             }
 
         self.direction = directions_dictionary.get(direction) # Get the direction given
-        if self.direction.all() == self.x.all():
+        if np.array_equal(self.direction, self.x) == True:
             self.perpendicular_direction_1 = self.y
             self.perpendicular_direction_2 = self.z
             self.number_faces_coarse_face = int((self.number_elements_y_direction/self.ny)*(self.number_elements_z_direction/self.nz))
 
-        elif self.direction.all() == self.y.all():
+        elif np.array_equal(self.direction, self.y) == True:
             self.perpendicular_direction_1 = self.x
             self.perpendicular_direction_2 = self.z
             self.number_faces_coarse_face = int((self.number_elements_x_direction/self.nx)*(self.number_elements_z_direction/self.nz))
 
-        elif self.direction.all() == self.z.all():
+        elif np.array_equal(self.direction, self.z) == True:
             self.perpendicular_direction_1 = self.x
             self.perpendicular_direction_2 = self.y
             self.number_faces_coarse_face = int((self.number_elements_x_direction/self.ny)*(self.number_elements_y_direction/self.ny))
@@ -292,4 +327,10 @@ class LocalProblems:
             transmissibility = lil_matrix.tocsr(self.coarse.elements[i].transmissibility)
             source = lil_matrix.tocsr(self.coarse.elements[i].source)
             global_id_volumes = self.coarse.elements[i].volumes.father_id[:]
-            self.mesh.pressure[global_id_volumes] = spsolve(transmissibility,source)
+
+            if np.array_equal(self.direction, self.x) == True:
+                self.mesh.pressure_x[global_id_volumes] = spsolve(transmissibility,source)
+            elif np.array_equal(self.direction, self.y) == True:
+                self.mesh.pressure_y[global_id_volumes] = spsolve(transmissibility,source)
+            elif np.array_equal(self.direction, self.z) == True:
+                self.mesh.pressure_z[global_id_volumes] = spsolve(transmissibility,source)
