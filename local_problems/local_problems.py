@@ -7,18 +7,21 @@ import numpy as np
 import yaml
 from scipy.sparse import lil_matrix
 from scipy.sparse.linalg import spsolve
+from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as impress
+from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
+from local_problems.boundary_conditions import BoundaryConditionsLocalProblems
 
 
 class LocalProblems:
 
-    def __init__(self, preprocessor, coarse_config, mesh_file = None, boundary_condition_type = None):
+    def __init__(self, mesh_file = None, boundary_condition_type = None):
 
-        print('\n##### Treatment of local problems #####')
+        print('\n***** Treatment of local problems *****')
 
         # Preprocessing mesh with IMPRESS
         print('\nPre-processing mesh with IMPRESS...')
         start = time.time()
-        self.mesh = preprocessor(mesh_file, dim = 3) # IMPRESS' object
+        self.mesh = impress(mesh_file, dim = 3) # IMPRESS' object
         end = time.time()
         print("\nThis step lasted {0}s".format(end-start))
 
@@ -39,62 +42,66 @@ class LocalProblems:
         self.pressure_gradient = 500
         self.system = np.array([self.x, self.y, self.z])
 
-        # Assembly of local problems
-        print('\nAssembly of local problems in x direction...')
-        start = time.time()
-        self.assembly_local_problem()
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
-        # Upscaled permeability in x direction
-        print("\nSetting boundary conditions...")
-        start = time.time()
-        self.set_boundary_conditions('x')
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
-        # Solve local problems in x direction
-        print('\nSolving local problems...')
-        start = time.time()
-        self.solve_local_problems()
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
+        opa = BoundaryConditionsLocalProblems(self, self.boundary_condition_type, 'x')
+        opa.teste()
 
-        # Assembly of local problems
-        print('\nAssembly of local problems in y direction...')
-        start = time.time()
-        self.assembly_local_problem()
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
-        # Upscaled permeability in y direction
-        print("\nSetting boundary conditions...")
-        start = time.time()
-        self.set_boundary_conditions('y')
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
-        # Solve local problems in y direction
-        print('\nSolving local problems...')
-        start = time.time()
-        self.solve_local_problems()
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
 
-        # Assembly of local problems
-        print('\nAssembly of local problems in z direction...')
-        start = time.time()
-        self.assembly_local_problem()
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
-        # Upscaled permeability in z direction
-        print("\nSetting boundary conditions...")
-        start = time.time()
-        self.set_boundary_conditions('z')
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
-        # Solve local problems in z direction
-        print('\nSolving local problems...')
-        start = time.time()
-        self.solve_local_problems()
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
+        # # Assembly of local problems
+        # print('\nAssembly of local problems in x direction...')
+        # start = time.time()
+        # self.assembly_local_problem()
+        # end = time.time()
+        # print("\nThis step lasted {0}s".format(end-start))
+        # # Upscaled permeability in x direction
+        # print("\nSetting boundary conditions...")
+        # start = time.time()
+        # self.set_boundary_conditions('x')
+        # end = time.time()
+        # print("\nThis step lasted {0}s".format(end-start))
+        # # Solve local problems in x direction
+        # print('\nSolving local problems...')
+        # start = time.time()
+        # self.solve_local_problems()
+        # end = time.time()
+        # print("\nThis step lasted {0}s".format(end-start))
+        #
+        # # Assembly of local problems
+        # print('\nAssembly of local problems in y direction...')
+        # start = time.time()
+        # self.assembly_local_problem()
+        # end = time.time()
+        # print("\nThis step lasted {0}s".format(end-start))
+        # # Upscaled permeability in y direction
+        # print("\nSetting boundary conditions...")
+        # start = time.time()
+        # self.set_boundary_conditions('y')
+        # end = time.time()
+        # print("\nThis step lasted {0}s".format(end-start))
+        # # Solve local problems in y direction
+        # print('\nSolving local problems...')
+        # start = time.time()
+        # self.solve_local_problems()
+        # end = time.time()
+        # print("\nThis step lasted {0}s".format(end-start))
+        #
+        # # Assembly of local problems
+        # print('\nAssembly of local problems in z direction...')
+        # start = time.time()
+        # self.assembly_local_problem()
+        # end = time.time()
+        # print("\nThis step lasted {0}s".format(end-start))
+        # # Upscaled permeability in z direction
+        # print("\nSetting boundary conditions...")
+        # start = time.time()
+        # self.set_boundary_conditions('z')
+        # end = time.time()
+        # print("\nThis step lasted {0}s".format(end-start))
+        # # Solve local problems in z direction
+        # print('\nSolving local problems...')
+        # start = time.time()
+        # self.solve_local_problems()
+        # end = time.time()
+        # print("\nThis step lasted {0}s".format(end-start))
 
     def get_mesh_informations(self, mesh_info_file = 'mesh_info.yml'):
         """
