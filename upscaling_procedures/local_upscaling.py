@@ -3,39 +3,32 @@ Module of local upscaling technique in structured tridimensional meshes
 """
 import time
 import numpy as np
+from local_problems.local_problems import LocalProblems
 
 class LocalUpscaling:
 
-    def __init__(self, local_problems_object, preprocessor, coarse_config, mesh_file = None, boundary_condition_type = None):
-        """
-            Steps of local upscaling:
+    def __init__(self, mesh_file = None, boundary_condition_type = None):
+        initial_time = time.time()
 
-        -> Calculate upscaled permeability or upscaled transmissibility
-        -> Assembly of global coarse problem
-        -> Apply boundary conditions to global coarse problem
-        -> Solve global coarse problem
-        """
-        print("\n########## Local upscaling class initialized ##########")
-        self.lp = local_problems_object(preprocessor, coarse_config, mesh_file, boundary_condition_type)
+        print("\n********** Local upscaling class initialized **********")
+        self.lp = LocalProblems(mesh_file, boundary_condition_type)
         self.mesh = self.lp.mesh
         self.coarse = self.lp.coarse
         self.number_volumes_local_problem = self.lp.number_volumes_local_problem
         self.number_coarse_volumes = self.lp.number_coarse_volumes
 
-    def upscaled_permeability(self):
+        final_time = time.time()
+        print("\nThe upscaling lasted {0}s".format(final_time-initial_time))
+
+    def upscale_permeability(self):
         """
         It calculates the effective permeability of a coarse volume
         """
-        for i in range(len(self.number_coarse_volumes)):
-            # Direction x
-            print(i)
+        pass
 
-    def assembly(self):
+    def upscale_porosity(self):
         pass
 
     def boundary_conditions(self):
         # Read data
-        pass
-
-    def solver(self):
         pass
