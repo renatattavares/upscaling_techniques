@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.sparse import lil_matrix
 
 class BoundaryConditionsLocalProblems:
 
@@ -21,18 +22,18 @@ class BoundaryConditionsLocalProblems:
             3: self.periodic_pressure        # Periodic pressure
             }
 
-        self.direction = directions_dictionary.get(direction) # Get the direction given
-        if np.array_equal(self.direction, self.data.x) == True:
+        self.data.direction = directions_dictionary.get(direction) # Get the direction given
+        if np.array_equal(self.data.direction, self.data.x) == True:
             self.perpendicular_direction_1 = self.data.y
             self.perpendicular_direction_2 = self.data.z
             self.number_faces_coarse_face = int((self.data.number_elements_y_direction/self.data.ny)*(self.data.number_elements_z_direction/self.data.nz))
 
-        elif np.array_equal(self.direction, self.data.y) == True:
+        elif np.array_equal(self.data.direction, self.data.y) == True:
             self.perpendicular_direction_1 = self.data.x
             self.perpendicular_direction_2 = self.data.z
             self.number_faces_coarse_face = int((self.data.number_elements_x_direction/self.data.nx)*(self.data.number_elements_z_direction/self.data.nz))
 
-        elif np.array_equal(self.direction, self.data.z) == True:
+        elif np.array_equal(self.data.direction, self.data.z) == True:
             self.perpendicular_direction_1 = self.data.x
             self.perpendicular_direction_2 = self.data.y
             self.number_faces_coarse_face = int((self.data.number_elements_x_direction/self.data.ny)*(self.data.number_elements_y_direction/self.data.ny))
@@ -75,16 +76,15 @@ class BoundaryConditionsLocalProblems:
 
     def identify_top_bottom_volumes(self):
 
-        ########################## BAD DEFINITION ##########################
-        correct_volumes_group_1 = np.zeros((self.data.number_coarse_volumes,self.data.number_faces_coarse_face), dtype = int)
-        correct_volumes_group_2 = np.zeros((self.data.number_coarse_volumes,self.data.number_faces_coarse_face), dtype = int)
-        ####################################################################
+        correct_volumes_group_1 = np.zeros((self.data.number_coarse_volumes, self.number_faces_coarse_face), dtype = int)
+        correct_volumes_group_2 = np.zeros((self.data.number_coarse_volumes, self.number_faces_coarse_face), dtype = int)
+
 
         for i in range(self.data.number_coarse_volumes):
             boundary_faces = self.data.coarse.elements[i].faces.boundary # Local IDs of boundary faces of a coarse volume
             normal_boundary_faces = self.data.coarse.elements[i].faces.normal[boundary_faces] # Normal vector of boundary faces of a coarse volumes
             direction_vector = np.ndarray(shape = np.shape(normal_boundary_faces), dtype = float)
-            direction_vector = np.full_like(direction_vector, self.direction) # Vectorization
+            direction_vector = np.full_like(direction_vector, self.data.direction) # Vectorization
 
             # Cross product and norm
             cross_product = np.cross(normal_boundary_faces, direction_vector)
@@ -124,3 +124,6 @@ class BoundaryConditionsLocalProblems:
             correct_volumes_group_2[i] = adjacent_volumes_group_2
 
         return correct_volumes_group_1, correct_volumes_group_2
+
+    def identify_side_volumes(self):
+        pass
