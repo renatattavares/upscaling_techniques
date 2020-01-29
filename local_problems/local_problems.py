@@ -6,14 +6,12 @@ import numpy as np
 #import xlsxwriter
 import yaml
 from scipy.sparse import lil_matrix
-from scipy.sparse.linalg import spsolve
-from local_problems.boundary_conditions import BoundaryConditionsLocalProblems as bclp
-from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as impress
+from local_problems.solver_local_problems import Solver
+from local_problems.boundary_conditions import BoundaryConditions
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
+from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as impress
 
-
-
-class LocalProblems:
+class LocalProblems(BoundaryConditions, Solver):
 
     def __init__(self, mesh_file = None, boundary_condition_type = None):
 
@@ -28,10 +26,8 @@ class LocalProblems:
 
         # Setting variables
         print('\nAccessing coarsening informations from IMPRESS and setting important variables...')
-        self.mesh.permeability[:] = np.array([1, 1, 1]) # Diagonal permeability tensor -> [Kx, 0, 0] -> [Kx, Ky, Kz]
-                # [0, Ky, 0]
-                # [0, 0, Kz]
         self.coarse = self.mesh.coarse
+        self.mesh.permeability[:] = np.array([1, 1, 1]) # Diagonal permeability
         self.boundary_condition_type = boundary_condition_type
         self.coarse_config = coarse_config() # Access IMPRESS' internal class
         self.get_mesh_informations()
@@ -40,20 +36,13 @@ class LocalProblems:
         self.x = np.array([1,0,0])
         self.y = np.array([0,1,0])
         self.z = np.array([0,0,1])
-
+        self.pressure_gradient = 1
+        self.direction_string = np.array(['x', 'y', 'z'])
         self.directions_dictionary = {
             'x': self.x,
             'y': self.y,
             'z': self.z
             }
-
-        self.pressure_gradient = 1
-        self.system = np.array([self.x, self.y, self.z])
-
-        # Initializing boundary conditions class
-        bc = bclp(self, boundary_condition_type)
-        self.direction_string = np.array(['x', 'y', 'z'])
-
 
         # Set and solve local problems in x, y and z directions
         for i in self.direction_string:
@@ -65,7 +54,7 @@ class LocalProblems:
 
             print('\nSetting boundary conditions in {} direction...'.format(i))
             start = time.time()
-            bc.set_boundary_conditions(i)
+            self.set_boundary_conditions(i)
             end = time.time()
             print("\nThis step lasted {}".format(end-start))
 
@@ -74,24 +63,6 @@ class LocalProblems:
             self.solve_local_problems()
             end = time.time()
             print("\nThis step lasted {}".format(end-start))
-
-    def get_mesh_informations(self, mesh_info_file = 'mesh_info.yml'):
-        """
-        Access coarsening informations given to IMPRESS.
-        """
-        self.tree = self.coarse_config.tree['Simple']
-        self.nx = self.tree['nx']
-        self.ny = self.tree['ny']
-        self.nz = self.tree['nz']
-
-        with open(mesh_info_file, 'r') as file:
-            data = yaml.safe_load(file)
-
-        self.number_elements_x_direction = data['x']
-        self.number_elements_y_direction = data['y']
-        self.number_elements_z_direction = data['z']
-
-        print('\nMesh informations accessed')
 
     def assembly_local_problem(self):
         """
@@ -144,18 +115,3 @@ class LocalProblems:
             equivalent_permeability = 2*self.permeability_multiplication/self.permeability_sum
             self.global_ids_faces_direction = self.coarse.elements[coarse_volume].faces.father_id[faces_direction]
             self.coarse.elements[coarse_volume].equivalent_permeability[faces_direction] = equivalent_permeability
-
-    def solve_local_problems(self):
-
-        for i in range(self.number_coarse_volumes):
-            print("Solving local problem of coarse volume {0}".format(i))
-            transmissibility = lil_matrix.tocsr(self.coarse.elements[i].transmissibility)
-            source = lil_matrix.tocsr(self.coarse.elements[i].source)
-            global_id_volumes = self.coarse.elements[i].volumes.father_id[:]
-
-            if np.array_equal(self.direction, self.x) == True:
-                self.mesh.pressure_x[global_id_volumes] = spsolve(transmissibility,source)
-            elif np.array_equal(self.direction, self.y) == True:
-                self.mesh.pressure_y[global_id_volumes] = spsolve(transmissibility,source)
-            elif np.array_equal(self.direction, self.z) == True:
-                self.mesh.pressure_z[global_id_volumes] = spsolve(transmissibility,source)
