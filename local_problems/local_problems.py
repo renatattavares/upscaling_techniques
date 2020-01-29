@@ -26,11 +26,10 @@ class LocalProblems(BoundaryConditions, Solver, Assembly):
 
         # Setting variables
         print('\nAccessing coarsening informations from IMPRESS and setting important variables...')
-        self.coarse = self.mesh.coarse
-        self.mesh.permeability[:] = np.array([1, 1, 1]) # Diagonal permeability
-        self.boundary_condition_type = boundary_condition_type
         self.coarse_config = coarse_config() # Access IMPRESS' internal class
         self.get_mesh_informations()
+        self.coarse = self.mesh.coarse
+        self.boundary_condition_type = boundary_condition_type
         self.number_coarse_volumes = len(self.coarse.elements) # Number of volumes from the coarse mesh
         self.number_volumes_local_problem = len(self.mesh.volumes)/(self.nx*self.ny*self.nz) # Number of fine scale volumes inside a coarse volume
         self.x = np.array([1,0,0])
@@ -43,6 +42,9 @@ class LocalProblems(BoundaryConditions, Solver, Assembly):
             'y': self.y,
             'z': self.z
             }
+
+        # Parameters that need to be accessed in IMEX dataset
+        self.mesh.permeability[:] = np.array([1, 1, 1]) # Diagonal permeability
 
         # Set and solve local problems in x, y and z directions
         for i in self.direction_string:

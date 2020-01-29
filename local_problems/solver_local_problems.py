@@ -12,9 +12,9 @@ class Solver:
             source = lil_matrix.tocsr(self.coarse.elements[i].source)
             global_id_volumes = self.coarse.elements[i].volumes.father_id[:]
 
-            if np.array_equal(self.direction, self.x) == True:
+            if np.array_equal(self.direction, self.x) is True:
                 self.mesh.pressure_x[global_id_volumes] = spsolve(transmissibility,source)
-            elif np.array_equal(self.direction, self.y) == True:
+            elif np.array_equal(self.direction, self.y) is True:
                 self.mesh.pressure_y[global_id_volumes] = spsolve(transmissibility,source)
-            elif np.array_equal(self.direction, self.z) == True:
+            elif np.array_equal(self.direction, self.z) is True:
                 self.mesh.pressure_z[global_id_volumes] = spsolve(transmissibility,source)
