@@ -61,3 +61,10 @@ upscaled_permeability:
   data type: float
   sparse: False
   level: 1
+
+equivalent_permeability:
+  type: faces
+  data size: 1
+  data type: float
+  sparse: False
+  level: 1

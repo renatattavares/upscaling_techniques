@@ -11,18 +11,14 @@ class BoundaryConditionsLocalProblems:
         """
         Indicates which function must be executed to set boundary conditions acording to the option informed by the user.
         """
-        directions_dictionary = {
-            'x': self.data.x,
-            'y': self.data.y,
-            'z': self.data.z
-            }
-        boundary_conditions_dictionary = {
+        
+        self.data.boundary_conditions_dictionary = {
             1: self.fixed_constant_pressure, # Fixed constant pressure
             2: self.fixed_linear_pressure,   # Fixed linear pressure
             3: self.periodic_pressure        # Periodic pressure
             }
 
-        self.data.direction = directions_dictionary.get(direction) # Get the direction given
+        self.data.direction = self.data.directions_dictionary.get(direction) # Get the direction given
         if np.array_equal(self.data.direction, self.data.x) == True:
             self.perpendicular_direction_1 = self.data.y
             self.perpendicular_direction_2 = self.data.z
@@ -38,7 +34,7 @@ class BoundaryConditionsLocalProblems:
             self.perpendicular_direction_2 = self.data.y
             self.number_faces_coarse_face = int((self.data.number_elements_x_direction/self.data.ny)*(self.data.number_elements_y_direction/self.data.ny))
 
-        boundary_conditions_dictionary.get(self.boundary_condition_type, "\nprint('Invalid boundary condition')")() # Execute the correct boundary condition function
+        self.data.boundary_conditions_dictionary.get(self.boundary_condition_type, "\nprint('Invalid boundary condition')")() # Execute the correct boundary condition function
 
     def fixed_constant_pressure(self):
         """

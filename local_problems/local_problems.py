@@ -7,9 +7,10 @@ import numpy as np
 import yaml
 from scipy.sparse import lil_matrix
 from scipy.sparse.linalg import spsolve
+from local_problems.boundary_conditions import BoundaryConditionsLocalProblems as bclp
 from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as impress
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
-from local_problems.boundary_conditions import BoundaryConditionsLocalProblems
+
 
 
 class LocalProblems:
@@ -39,70 +40,40 @@ class LocalProblems:
         self.x = np.array([1,0,0])
         self.y = np.array([0,1,0])
         self.z = np.array([0,0,1])
-        self.pressure_gradient = 500
+
+        self.directions_dictionary = {
+            'x': self.x,
+            'y': self.y,
+            'z': self.z
+            }
+
+        self.pressure_gradient = 1
         self.system = np.array([self.x, self.y, self.z])
 
         # Initializing boundary conditions class
-        bc = BoundaryConditionsLocalProblems(self, boundary_condition_type)
+        bc = bclp(self, boundary_condition_type)
+        self.direction_string = np.array(['x', 'y', 'z'])
 
-        # Assembly of local problems
-        print('\nAssembly of local problems in x direction...')
-        start = time.time()
-        self.assembly_local_problem()
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
 
-        # Upscaled permeability in x direction
-        print("\nSetting boundary conditions...")
-        start = time.time()
-        bc.set_boundary_conditions('x')
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
+        # Set and solve local problems in x, y and z directions
+        for i in self.direction_string:
+            print('\nAssembly of local problems in {} direction...'.format(i))
+            start = time.time()
+            self.assembly_local_problem()
+            end = time.time()
+            print("\nThis step lasted {}".format(end-start))
 
-        # Solve local problems in x direction
-        print('\nSolving local problems...')
-        start = time.time()
-        self.solve_local_problems()
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
+            print('\nSetting boundary conditions in {} direction...'.format(i))
+            start = time.time()
+            bc.set_boundary_conditions(i)
+            end = time.time()
+            print("\nThis step lasted {}".format(end-start))
 
-        # Assembly of local problems
-        print('\nAssembly of local problems in y direction...')
-        start = time.time()
-        self.assembly_local_problem()
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
-        # Upscaled permeability in y direction
-        print("\nSetting boundary conditions...")
-        start = time.time()
-        bc.set_boundary_conditions('y')
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
-        # Solve local problems in y direction
-        print('\nSolving local problems...')
-        start = time.time()
-        self.solve_local_problems()
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
-
-        # Assembly of local problems
-        print('\nAssembly of local problems in z direction...')
-        start = time.time()
-        self.assembly_local_problem()
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
-        # Upscaled permeability in z direction
-        print("\nSetting boundary conditions...")
-        start = time.time()
-        bc.set_boundary_conditions('z')
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
-        # Solve local problems in z direction
-        print('\nSolving local problems...')
-        start = time.time()
-        self.solve_local_problems()
-        end = time.time()
-        print("\nThis step lasted {0}s".format(end-start))
+            print('\nSolving local problems in {} direction...'.format(i))
+            start = time.time()
+            self.solve_local_problems()
+            end = time.time()
+            print("\nThis step lasted {}".format(end-start))
 
     def get_mesh_informations(self, mesh_info_file = 'mesh_info.yml'):
         """
@@ -128,9 +99,9 @@ class LocalProblems:
         """
 
         for i in range(self.number_coarse_volumes):
-            print("Assembly of local problem {0}".format(i))
+            print("Assembly of local problem {}".format(i))
             faces_local_ids = self.coarse.elements[i].faces.internal # Local IDs from the internal faces from a coarse volume
-            equivalent_permeability = self.equivalent_permeability(i, faces_local_ids)
+            self.equivalent_permeability(i, faces_local_ids)
             adjacent_volumes = self.coarse.elements[i].faces.bridge_adjacencies(faces_local_ids, 2, 3).flatten() # Local IDs from both the neighbors from each of the internal faces
             neighbors_centers = np.reshape(self.coarse.elements[i].volumes.center[adjacent_volumes], newshape = (len(faces_local_ids), 6))
             neighbors_centers[:, 3:6] = neighbors_centers[:, 3:6]*(-1)
@@ -142,8 +113,8 @@ class LocalProblems:
             for j in range(len(faces_local_ids)):
                 self.id1 = int(adjacent_volumes[j,0]) # ID of the first neighbor from the face
                 self.id2 = int(adjacent_volumes[j,1]) # ID of the second neighbor from the face
-                self.transmissibility[self.id1,self.id2] += equivalent_permeability[j]/centers_distance[j]
-                self.transmissibility[self.id2,self.id1] += equivalent_permeability[j]/centers_distance[j]
+                self.transmissibility[self.id1,self.id2] += self.mesh.coarse.elements[i].equivalent_permeability[faces_local_ids[j]]/centers_distance[j]
+                self.transmissibility[self.id2,self.id1] += self.mesh.coarse.elements[i].equivalent_permeability[faces_local_ids[j]]/centers_distance[j]
 
             lil_matrix.setdiag(self.transmissibility,(-1)*self.transmissibility.sum(axis = 1))
             self.coarse.elements[i].transmissibility = self.transmissibility # Store transmissibility in a IMPRESS' variable
@@ -153,61 +124,26 @@ class LocalProblems:
         Calculates the equivalent permeability of each internal face
         """
         faces_normal = self.coarse.elements[coarse_volume].faces.normal[faces_local_ids]
-        equivalent_permeability = np.arange(len(faces_local_ids))
+        permeability_column = np.arange(3)
 
-        # Testing faces for x direction
-        cross_product = np.cross(self.x, faces_normal)
-        norm_cross_product = np.linalg.norm(cross_product, axis = 1)
-        index_faces_x_direction = np.isin(norm_cross_product, 0)
-        faces_x_direction = faces_local_ids[index_faces_x_direction]
-        adjacent_volumes = self.coarse.elements[coarse_volume].faces.bridge_adjacencies(faces_x_direction, 2, 3)
-        global_id_adjacent_volumes_x = self.coarse.elements[coarse_volume].volumes.father_id[adjacent_volumes]
-        permeability_x_direction = self.mesh.permeability[global_id_adjacent_volumes_x]
-        permeability_x_direction = permeability_x_direction[:,0]
-        permeability_x_direction = np.reshape(permeability_x_direction, newshape = (len(adjacent_volumes), 2))
-        p1 = permeability_x_direction[:,0]
-        p2 = permeability_x_direction[:,1]
-        permeability_multiplication = np.multiply(p1, p2)
-        permeability_sum = p1 + p2
-        self.equivalent_permeability_x = 2*permeability_multiplication/permeability_sum
-
-        # Testing faces for y direction
-        cross_product = np.cross(self.y, faces_normal)
-        norm_cross_product = np.linalg.norm(cross_product, axis = 1)
-        index_faces_y_direction = np.isin(norm_cross_product, 0)
-        faces_y_direction = faces_local_ids[index_faces_y_direction]
-        adjacent_volumes = self.coarse.elements[coarse_volume].faces.bridge_adjacencies(faces_y_direction, 2, 3)
-        global_id_adjacent_volumes_y = self.coarse.elements[coarse_volume].volumes.father_id[adjacent_volumes]
-        permeability_y_direction = self.mesh.permeability[global_id_adjacent_volumes_y]
-        permeability_y_direction = permeability_y_direction[:,1]
-        permeability_y_direction = np.reshape(permeability_y_direction, newshape = (len(adjacent_volumes), 2))
-        p1 = permeability_y_direction[:,0]
-        p2 = permeability_y_direction[:,1]
-        permeability_multiplication = np.multiply(p1, p2)
-        permeability_sum = p1 + p2
-        self.equivalent_permeability_y = 2*permeability_multiplication/permeability_sum
-
-        # Testing faces for z direction
-        cross_product = np.cross(self.z, faces_normal)
-        norm_cross_product = np.linalg.norm(cross_product, axis = 1)
-        index_faces_z_direction = np.isin(norm_cross_product, 0)
-        faces_z_direction = faces_local_ids[index_faces_z_direction]
-        adjacent_volumes = self.coarse.elements[coarse_volume].faces.bridge_adjacencies(faces_z_direction, 2, 3)
-        global_id_adjacent_volumes_z = self.coarse.elements[coarse_volume].volumes.father_id[adjacent_volumes]
-        permeability_z_direction = self.mesh.permeability[global_id_adjacent_volumes_z]
-        permeability_z_direction = permeability_z_direction[:,2]
-        permeability_z_direction = np.reshape(permeability_z_direction, newshape = (len(adjacent_volumes), 2))
-        p1 = permeability_z_direction[:,0]
-        p2 = permeability_z_direction[:,1]
-        permeability_multiplication = np.multiply(p1, p2)
-        permeability_sum = p1 + p2
-        self.equivalent_permeability_z = 2*permeability_multiplication/permeability_sum
-        #
-        equivalent_permeability[index_faces_x_direction] = self.equivalent_permeability_x
-        equivalent_permeability[index_faces_y_direction] = self.equivalent_permeability_y
-        equivalent_permeability[index_faces_z_direction] = self.equivalent_permeability_z
-
-        return equivalent_permeability
+        for i, j in zip(self.direction_string, permeability_column):
+            direction = self.directions_dictionary.get(i)
+            cross_product = np.cross(direction, faces_normal)
+            norm_cross_product = np.linalg.norm(cross_product, axis = 1)
+            self.index_faces_direction = np.isin(norm_cross_product, 0)
+            faces_direction = faces_local_ids[self.index_faces_direction]
+            adjacent_volumes = self.coarse.elements[coarse_volume].faces.bridge_adjacencies(faces_direction, 2, 3)
+            global_id_adjacent_volumes = self.coarse.elements[coarse_volume].volumes.father_id[adjacent_volumes]
+            permeability_direction = self.mesh.permeability[global_id_adjacent_volumes]
+            permeability_direction = permeability_direction[:,j]
+            permeability_direction = np.reshape(permeability_direction, newshape = (len(adjacent_volumes), 2))
+            p1 = permeability_direction[:,0]
+            p2 = permeability_direction[:,1]
+            self.permeability_multiplication = np.multiply(p1, p2)
+            self.permeability_sum = p1 + p2
+            equivalent_permeability = 2*self.permeability_multiplication/self.permeability_sum
+            self.global_ids_faces_direction = self.coarse.elements[coarse_volume].faces.father_id[faces_direction]
+            self.coarse.elements[coarse_volume].equivalent_permeability[faces_direction] = equivalent_permeability
 
     def solve_local_problems(self):
 
