@@ -19,17 +19,17 @@ class BoundaryConditions(QuickPreprocessor):
             }
 
         self.direction = self.directions_dictionary.get(direction) # Get the direction given
-        if np.array_equal(self.direction, self.x) == True:
+        if np.array_equal(self.direction, self.x) is True:
             self.perpendicular_direction_1 = self.y
             self.perpendicular_direction_2 = self.z
             self.number_faces_coarse_face = int((self.number_elements_y_direction/self.ny)*(self.number_elements_z_direction/self.nz))
 
-        elif np.array_equal(self.direction, self.y) == True:
+        elif np.array_equal(self.direction, self.y) is True:
             self.perpendicular_direction_1 = self.x
             self.perpendicular_direction_2 = self.z
             self.number_faces_coarse_face = int((self.number_elements_x_direction/self.nx)*(self.number_elements_z_direction/self.nz))
 
-        elif np.array_equal(self.direction, self.z) == True:
+        elif np.array_equal(self.direction, self.z) is True:
             self.perpendicular_direction_1 = self.x
             self.perpendicular_direction_2 = self.y
             self.number_faces_coarse_face = int((self.number_elements_x_direction/self.ny)*(self.number_elements_y_direction/self.ny))
@@ -40,11 +40,11 @@ class BoundaryConditions(QuickPreprocessor):
         """
         Function to apply fixed constant pressure boundary condition, it returns a transmissibility and a source/sink matrix modified.
         """
-        correct_volumes_group_1, correct_volumes_group_2 = self.identify_top_bottom_volumes()
+        self.identify_top_bottom_volumes()
 
         for i in range(self.number_coarse_volumes):
-            volumes_group_1 = correct_volumes_group_1[i]
-            volumes_group_2 = correct_volumes_group_2[i]
+            volumes_group_1 = self.correct_volumes_group_1[i]
+            volumes_group_2 = self.correct_volumes_group_2[i]
             self.coarse.elements[i].transmissibility[volumes_group_1] = 0
             self.coarse.elements[i].transmissibility[volumes_group_2] = 0
             self.coarse.elements[i].transmissibility[volumes_group_1, volumes_group_1] = 1
