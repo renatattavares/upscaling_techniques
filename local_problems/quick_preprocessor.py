@@ -1,3 +1,4 @@
+import yaml
 import numpy as np
 
 class QuickPreprocessor:
@@ -19,7 +20,7 @@ class QuickPreprocessor:
         self.number_elements_z_direction = data['z']
 
         print('\nMesh informations accessed')
-    
+
     def identify_top_bottom_volumes(self):
 
         correct_volumes_group_1 = np.zeros((self.number_coarse_volumes, self.number_faces_coarse_face), dtype = int)

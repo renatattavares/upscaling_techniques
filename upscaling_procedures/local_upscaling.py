@@ -21,7 +21,6 @@ class LocalUpscaling:
         self.viscosity = 1
 
 
-
         final_time = time.time()
         print("\nThe upscaling lasted {0}s".format(final_time-initial_time))
 

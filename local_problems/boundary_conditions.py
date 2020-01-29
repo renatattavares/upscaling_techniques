@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.sparse import lil_matrix
+from local_problems.quick_preprocessor import QuickPreprocessor
 
 class BoundaryConditions(QuickPreprocessor):
 
