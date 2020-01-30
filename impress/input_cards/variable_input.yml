@@ -66,11 +66,11 @@ equivalent_permeability:
   type: faces
   data size: 1
   data type: float
-  sparse: False
+  sparse: True
   level: 1
 
-teste:
-  type: faces
+porosity:
+  type: volumes
   data size: 1
   data type: float
   sparse: False
