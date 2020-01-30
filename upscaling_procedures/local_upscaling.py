@@ -22,6 +22,7 @@ class LocalUpscaling:
 
         # Parameters that need to be accessed in IMEX dataset
         self.viscosity = 1
+        self.face_area = 1
 
         final_time = time.time()
         print("\nThe upscaling lasted {0}s".format(final_time-initial_time))
@@ -30,46 +31,51 @@ class LocalUpscaling:
         """
         It calculates the effective permeability of a coarse volume
         """
-        # for i in self.lp.direction_string:
-        #     self.direction = self.lp.directions_dictionary.get(i)
-        #
-        #     if np.array_equal(self.direction, self.x) is True:
-        #         correct_volumes = self.lp.correct_volumes_x
-        #     elif np.array_equal(self.direction, self.y) is True:
-        #         correct_volumes = self.lp.correct_volumes_y
-        #     elif np.array_equal(self.direction, self.z) is True:
-        #         correct_volumes = self.lp.correct_volumes_z
+        for i in self.lp.direction_string:
+            self.direction = self.lp.directions_dictionary.get(i)
 
-        correct_volumes = self.lp.correct_volumes_x
-        self.direction = self.lp.x
+            if np.array_equal(self.direction, self.x) is True:
+                correct_volumes = self.lp.correct_volumes_x
+            elif np.array_equal(self.direction, self.y) is True:
+                correct_volumes = self.lp.correct_volumes_y
+            elif np.array_equal(self.direction, self.z) is True:
+                correct_volumes = self.lp.correct_volumes_z
 
-        for j in range(1):
-            # Check if faces are in the correct direction
-            self.adjacent_faces = np.unique(self.coarse.elements[j].volumes.adjacencies[correct_volumes[j]].flatten())
-            self.faces_normal = self.coarse.elements[j].faces.normal[self.adjacent_faces.flatten()]
-            self.cross_product = np.cross(self.faces_normal, self.direction)
-            self.norm_cross_product = np.linalg.norm(self.cross_product, axis = 1)
-            # self.correct_faces = np.isin(self.norm_cross_product, 1)
-            # self.index_correct_faces = np.where(self.correct_faces == True)[0]
-            # self.correct_faces = self.adjacent_faces.flatten()[self.index_correct_faces]
-            #
-            # self.global_ids_correct_faces = self.coarse.elements[j].faces.father_id[self.correct_faces]
+            for j in range(self.number_coarse_volumes):
+
+                # Check if faces are in the correct direction
+                adjacent_faces = np.unique(self.coarse.elements[j].volumes.adjacencies[correct_volumes[j]].flatten())
+                faces_normal = self.coarse.elements[j].faces.normal[adjacent_faces.flatten()]
+                cross_product = np.cross(faces_normal, self.direction)
+                norm_cross_product = np.linalg.norm(cross_product, axis = 1)
+                parcial_correct_faces = np.isin(norm_cross_product, 0)
+                index_correct_faces = np.where(parcial_correct_faces == True)[0]
+                parcial_correct_faces = adjacent_faces[index_correct_faces]
+
+                # Check if faces are internal
+                internal_faces = self.coarse.elements[j].faces.internal
+                correct_faces = np.isin(parcial_correct_faces, internal_faces)
+                index_correct_faces = np.where(correct_faces == True)[0]
+                correct_faces = parcial_correct_faces[index_correct_faces]
+
+                equivalent_permeability = self.coarse.elements[j].equivalent_permeability[correct_faces]
+                adjacent_volumes = self.coarse.elements[j].faces.bridge_adjacencies(correct_faces, 2, 3)
+                global_id_adjacent_volumes = self.coarse.elements[j].volumes.father_id[adjacent_volumes.flatten()]
+                pressures = self.mesh.pressure_x[global_id_adjacent_volumes]
 
 
-                # # Check if faces are internal
-                # internal_faces = self.coarse.elements[j].faces.internal
-                # correct_faces = np.isin(correct_faces, internal_faces)
-                # index_correct_faces = np.where(correct_faces == False)[0]
-                # correct_faces = adjacent_faces.flatten()[index_correct_faces]
-                #
-                # global_ids_correct_faces = self.coarse.elements[j].faces.father_id[correct_faces]
-                # self.mesh.teste[global_ids_correct_faces] = 1000
-                # #flow_rate = (-1/self.viscosity)*self.mesh.permeability[i]*
-                self.mesh.teste[global_id] = 1000
+                flow_rate = (-1/self.viscosity)*self.equivalent_permeability*self.face_area
+                total_flow_rate = flow_rate.sum()
+                #self.effective_permeability = total_flow_rate*/
 
     def upscale_porosity(self):
-        pass
+        """
+        It calculates the effective porosity of a coarse volume
+        """
 
-    def boundary_conditions(self):
-        # Read data
-        pass
+        for i in range(self.number_coarse_volumes):
+            global_id_volumes = self.coarse.elements[i].volumes.father_id[:]
+            porosity = self.mesh.porosity[global_id_volumes]
+            volumes = np.arange(len(porosity))
+            volumes[:] = 1
+            effective_porosity = (np.multiply(porosity*volumes).sum())/volumes.sum() 

@@ -43,9 +43,6 @@ class LocalProblems(BoundaryConditions, Solver, Assembly):
             'z': self.z
             }
 
-        # Parameters that need to be accessed in IMEX dataset
-        self.mesh.permeability[:] = np.array([1, 1, 1]) # Diagonal permeability
-
         # Set and solve local problems in x, y and z directions
         for i in self.direction_string:
             print('\nAssembly of local problems in {} direction...'.format(i))
