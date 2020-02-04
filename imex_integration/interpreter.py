@@ -39,25 +39,45 @@ class Interpreter:
 
         return number_elements, length_elements
 
-    def read_porosity(dataset):
+    def read_porosity(lines):
 
         print('\n##### Read porosity data from dataset #####')
         porosity_token = '*POR'
+        porosity_lines = int(1122000/5)
         lines = lines
+        i = 0
 
         for line in lines:
             if line.find(porosity_token) is 0:
-                correct_line = line
+                porosity_data = lines[(i+1):int(i+1+porosity_lines)]
                 break
+            i += 1
 
-    def read_permeability():
-        # print('\n##### Read porosity data from dataset #####')
-        # permeability_token = '*PERM'
-        #
-        # with open(dataset_file) as dataset:
-        #     i = 0
-        #     lines = dataset.readlines()
-        #     for line in lines:
-        #         if line.find(permeability_token) is 0:
-        #             correct_line = line
-        #             break
+        porosity_array = np.zeros((porosity_lines,5))
+
+        for i in range(porosity_lines):
+            porosity_array[i] = np.fromstring(porosity_data[i], sep = " ")
+
+        return porosity_array
+
+    def read_permeability(lines):
+        print('\n##### Read permeability data from dataset #####')
+        permeability_x_token = '*PERMI'
+        permeability_y_token = '*PERMJ'
+        permeability_z_token = '*PERMK'
+        permeability_data = []
+        permeability_lines = int(1122000/5)
+        lines = lines
+        i = 0
+
+        tokens = [permeability_x_token, permeability_y_token, permeability_z_token]
+
+        for token in tokens:
+            print(token)
+            for line in lines:
+                if line.find(token) is 0:
+                    permeability_data.append(lines[(i+1):int(i+1+permeability_lines)])
+                    break
+                i += 1
+
+        return permeability_data

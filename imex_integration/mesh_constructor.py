@@ -3,7 +3,7 @@ from pymoab import core, types, rng
 
 class MeshConstructor:
     def __init__(self, number_elements, length_elements):
-        print('##### Generating mesh file #####')
+        print('\n##### Generating mesh file #####')
         elements = number_elements
         length = length_elements
 
