@@ -9,13 +9,17 @@ from local_problems.boundary_conditions import BoundaryConditions
 from local_problems.assembly import Assembly
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as impress
+from imex_integration.read_dataset import read_dataset
 
 class LocalProblems(BoundaryConditions, Solver, Assembly):
 
-    def __init__(self, mesh_file = None, boundary_condition_type = None):
+    def __init__(self, dataset = None, boundary_condition_type = None):
 
         print('\n##### Treatment of local problems #####')
 
+        # Read dataset
+        porosity, permeability = read_dataset(dataset)
+        mesh_file = 'generated_mesh.h5m'
         # Preprocessing mesh with IMPRESS
         print('\nPre-processing mesh with IMPRESS...')
         start = time.time()
@@ -25,7 +29,8 @@ class LocalProblems(BoundaryConditions, Solver, Assembly):
 
         # Setting variables
         print('\nAccessing coarsening informations from IMPRESS and setting important variables...')
-        self.mesh.permeability[:] = np.array([1,1,1])
+        self.mesh.permeability[:] = permeability
+        self.mesh.porosity[:] = porosity
         self.coarse_config = coarse_config() # Access IMPRESS' internal class
         self.get_mesh_informations()
         self.coarse = self.mesh.coarse
