@@ -10,7 +10,6 @@ from local_problems.assembly import Assembly
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as impress
 
-
 class LocalProblems(BoundaryConditions, Solver, Assembly):
 
     def __init__(self, mesh_file = None, boundary_condition_type = None):
@@ -26,6 +25,7 @@ class LocalProblems(BoundaryConditions, Solver, Assembly):
 
         # Setting variables
         print('\nAccessing coarsening informations from IMPRESS and setting important variables...')
+        self.mesh.permeability[:] = np.array([1,1,1])
         self.coarse_config = coarse_config() # Access IMPRESS' internal class
         self.get_mesh_informations()
         self.coarse = self.mesh.coarse

@@ -18,4 +18,4 @@ def read_dataset(dataset_file):
 
     print('\n##### Mesh file created #####')
 
-    return permeability_data
+    return porosity_data, permeability_data

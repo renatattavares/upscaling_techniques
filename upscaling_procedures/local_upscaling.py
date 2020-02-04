@@ -78,4 +78,4 @@ class LocalUpscaling:
             porosity = self.mesh.porosity[global_id_volumes]
             volumes = np.arange(len(porosity))
             volumes[:] = 1
-            effective_porosity = (np.multiply(porosity*volumes).sum())/volumes.sum() 
+            effective_porosity = (np.multiply(porosity*volumes).sum())/volumes.sum()
