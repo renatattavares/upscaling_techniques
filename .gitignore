@@ -106,3 +106,4 @@ venv.bak/
 
 # Mesh
 *.vtk
+*.h5m
