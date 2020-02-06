@@ -58,7 +58,9 @@ class Interpreter:
         for i in range(porosity_lines):
             porosity_array[i] = np.fromstring(porosity_data[i], sep = " ")
 
-        return porosity_array
+        porosity = porosity_array.flatten()
+
+        return porosity
 
     def read_permeability(lines):
         print('\n##### Read permeability data from dataset #####')
@@ -74,10 +76,34 @@ class Interpreter:
 
         for token in tokens:
             print(token)
+            i = 0
             for line in lines:
                 if line.find(token) is 0:
                     permeability_data.append(lines[(i+1):int(i+1+permeability_lines)])
                     break
                 i += 1
 
-        return permeability_data
+        permi_array = np.zeros((224400,5))
+        permj_array = np.zeros((224400,5))
+        permk_array = np.zeros((224400,5))
+
+        permi = permeability_data[0]
+        permj = permeability_data[1]
+        permk = permeability_data[2]
+
+        for i in range(224400):
+            permi_array[i] = np.fromstring(permi[i], sep = " ")
+
+        for i in range(224400):
+            permj_array[i] = np.fromstring(permj[i], sep = " ")
+
+        for i in range(224400):
+            permk_array[i] = np.fromstring(permk[i], sep = " ")
+
+        permeability = np.zeros((1122000,3))
+
+        permeability[:,0] = permi_array.flatten()
+        permeability[:,1] = permj_array.flatten()
+        permeability[:,2] = permk_array.flatten()
+
+        return permeability
