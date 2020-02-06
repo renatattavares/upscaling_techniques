@@ -7,11 +7,11 @@ from local_problems.local_problems import LocalProblems
 
 class LocalUpscaling:
 
-    def __init__(self, dataset = None, boundary_condition_type = None):
+    def __init__(self, mesh_file = None, boundary_condition_type = None):
         initial_time = time.time()
 
         print("\n########## Local upscaling class initialized ##########")
-        self.lp = LocalProblems(dataset, boundary_condition_type)
+        self.lp = LocalProblems(mesh_file, boundary_condition_type)
         self.mesh = self.lp.mesh
         self.coarse = self.lp.coarse
         self.number_volumes_local_problem = self.lp.number_volumes_local_problem
