@@ -63,10 +63,10 @@ class QuickPreprocessor:
             local_ids_group_2 = np.where(index_group_2 == True)[0]
 
             adjacent_volumes_group_1 = self.coarse.elements[i].faces.bridge_adjacencies(local_ids_group_1, 2, 3)
-            adjacent_volumes_group_1 = np.reshape(adjacent_volumes_group_1, newshape = (1,25))
+            adjacent_volumes_group_1 = np.reshape(adjacent_volumes_group_1, newshape = (1,self.number_faces_coarse_face))
             self.correct_volumes_group_1[i] = adjacent_volumes_group_1
             adjacent_volumes_group_2 = self.coarse.elements[i].faces.bridge_adjacencies(local_ids_group_2, 2, 3)
-            adjacent_volumes_group_2 = np.reshape(adjacent_volumes_group_2, newshape = (1,25))
+            adjacent_volumes_group_2 = np.reshape(adjacent_volumes_group_2, newshape = (1,self.number_faces_coarse_face))
             self.correct_volumes_group_2[i] = adjacent_volumes_group_2
 
         if np.array_equal(self.direction, self.x) is True:
@@ -75,6 +75,6 @@ class QuickPreprocessor:
             self.correct_volumes_y = self.correct_volumes_group_1
         elif np.array_equal(self.direction, self.z) is True:
             self.correct_volumes_z = self.correct_volumes_group_1
-            
+
     def identify_side_volumes(self):
         pass
