@@ -8,13 +8,15 @@ class Solver:
 
         for i in range(self.number_coarse_volumes):
             print("Solving local problem of coarse volume {0}".format(i))
-            transmissibility = lil_matrix.tocsr(self.coarse.elements[i].transmissibility)
-            source = lil_matrix.tocsr(self.coarse.elements[i].source)
-            global_id_volumes = self.coarse.elements[i].volumes.father_id[:]
+            transmissibility = lil_matrix.tocsr(self.transmissibilities[i])
+            source = lil_matrix.tocsr(self.sources[i])
 
             if np.array_equal(self.direction, self.x) is True:
-                self.mesh.pressure_x[global_id_volumes] = spsolve(transmissibility,source)
+                self.pressure_x = np.array([])
+                self.pressure_x = np.append(self.pressure_x, spsolve(transmissibility,source))
             elif np.array_equal(self.direction, self.y) is True:
-                self.mesh.pressure_y[global_id_volumes] = spsolve(transmissibility,source)
+                self.pressure_y = np.array((len(self.mesh.volumes), 1))
+                self.pressure_y = np.append(self.pressure_y, spsolve(transmissibility,source))
             elif np.array_equal(self.direction, self.z) is True:
-                self.mesh.pressure_z[global_id_volumes] = spsolve(transmissibility,source)
+                self.pressure_z = np.array((len(self.mesh.volumes), 1))
+                self.pressure_z = np.append(self.pressure_z, spsolve(transmissibility,source))

@@ -41,17 +41,20 @@ class BoundaryConditions(QuickPreprocessor):
         Function to apply fixed constant pressure boundary condition, it returns a transmissibility and a source/sink matrix modified.
         """
         self.identify_top_bottom_volumes()
+        self.sources = np.array([])
 
         for i in range(self.number_coarse_volumes):
             volumes_group_1 = self.correct_volumes_group_1[i]
             volumes_group_2 = self.correct_volumes_group_2[i]
-            self.coarse.elements[i].transmissibility[volumes_group_1] = 0
-            self.coarse.elements[i].transmissibility[volumes_group_2] = 0
-            self.coarse.elements[i].transmissibility[volumes_group_1, volumes_group_1] = 1
-            self.coarse.elements[i].transmissibility[volumes_group_2, volumes_group_2] = 1
-            self.coarse.elements[i].source = lil_matrix((int(self.number_volumes_local_problem), 1), dtype = 'float')
-            self.coarse.elements[i].source[volumes_group_1] = self.pressure_gradient
-            self.coarse.elements[i].source[volumes_group_2] = 0
+            transmissibility = self.transmissibilities[i]
+            transmissibility[volumes_group_1] = 0
+            transmissibility[volumes_group_2] = 0
+            transmissibility[volumes_group_1, volumes_group_1] = 1
+            transmissibility[volumes_group_2, volumes_group_2] = 1
+            source = lil_matrix((int(self.number_volumes_local_problem), 1), dtype = 'float')
+            source[volumes_group_1] = self.pressure_gradient
+            [volumes_group_2] = 0
+            self.sources = np.append(self.sources, source)
 
         print('\nFixed constant pressure boundary condition applied')
 
