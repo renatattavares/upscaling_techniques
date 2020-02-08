@@ -4,9 +4,9 @@ Module for treatment of local problems to apply local upscaling technique in str
 import time
 import numpy as np
 #import xlsxwriter
-from local_problems.solver_local_problems import Solver
-from local_problems.boundary_conditions import BoundaryConditions
-from local_problems.assembly import Assembly
+from upscaling_procedures.local.solver_local_problems import Solver
+from upscaling_procedures.local.boundary_conditions import BoundaryConditions
+from upscaling_procedures.local.assembly import Assembly
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as impress
 

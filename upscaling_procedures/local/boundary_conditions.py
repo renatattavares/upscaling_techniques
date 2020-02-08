@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.sparse import lil_matrix
-from local_problems.quick_preprocessor import QuickPreprocessor
+from upscaling_procedures.local.quick_preprocessor import QuickPreprocessor
 
 class BoundaryConditions(QuickPreprocessor):
 

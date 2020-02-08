@@ -3,11 +3,10 @@ Module of local upscaling technique in structured tridimensional meshes
 """
 import time
 import numpy as np
-
-from local_problems.local_problems import LocalProblems
+from upscaling_procedures.local.local_problems import LocalProblems
 
 class LocalUpscaling:
-    
+
     def __init__(self, mesh_file = None, boundary_condition_type = None):
         initial_time = time.time()
 
