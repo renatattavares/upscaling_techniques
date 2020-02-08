@@ -11,7 +11,7 @@ from impress.preprocessor.meshHandle.configTools.configClass import coarseningIn
 from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as impress
 
 class LocalProblems(BoundaryConditions, Solver, Assembly):
-    @profile
+
     def __init__(self, mesh_file = None, boundary_condition_type = None):
 
         print('\n##### Treatment of local problems #####')
@@ -61,5 +61,3 @@ class LocalProblems(BoundaryConditions, Solver, Assembly):
             self.solve_local_problems()
             end = time.time()
             print("\nThis step lasted {}".format(end-start))
-
-            #return self.pressure_x, self.pressure_y, self.pressure_z

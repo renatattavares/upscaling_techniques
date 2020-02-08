@@ -27,11 +27,12 @@ class Assembly:
             p2 = permeability_direction[:,1]
             permeability_multiplication = np.multiply(p1, p2)
             permeability_sum = p1 + p2
-            equivalent_permeability[faces_direction] = np.reshape((2*permeability_multiplication/permeability_sum), newshape = (len(faces_direction),1))
+            result = 2*permeability_multiplication/permeability_sum
+            equivalent_permeability[faces_direction] = np.reshape(result, newshape = (len(faces_direction), 1))
 
-            return equivalent_permeability
+        return equivalent_permeability
 
-    
+
     def assembly_local_problem(self):
         """
         Assembly of local problems to generate the transmissibility matrix

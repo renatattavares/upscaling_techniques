@@ -11,18 +11,17 @@ class LocalUpscaling:
         initial_time = time.time()
 
         print("\n########## Local upscaling class initialized ##########")
-        self.lp = LocalProblems(mesh_file, boundary_condition_type)
-        self.mesh = self.lp.mesh
-        self.coarse = self.lp.coarse
-        self.number_volumes_local_problem = self.lp.number_volumes_local_problem
-        self.number_coarse_volumes = self.lp.number_coarse_volumes
-        self.x = self.lp.x
-        self.y = self.lp.y
-        self.z = self.lp.z
+        lp = LocalProblems(mesh_file, boundary_condition_type)
 
-        # Parameters that need to be accessed in IMEX dataset
-        self.viscosity = 1
-        self.face_area = 1
+        #self.number_volumes_local_problem = self.lp.number_volumes_local_problem
+        # self.number_coarse_volumes = self.lp.number_coarse_volumes
+        # self.x = self.lp.x
+        # self.y = self.lp.y
+        # self.z = self.lp.z
+        #
+        # # Parameters that need to be accessed in IMEX dataset
+        # self.viscosity = 1
+        # self.face_area = 1
 
         final_time = time.time()
         print("\nThe upscaling lasted {0}s".format(final_time-initial_time))
