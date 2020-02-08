@@ -5,23 +5,12 @@ import time
 import numpy as np
 from upscaling_procedures.local.local_problems import LocalProblems
 
-class LocalUpscaling:
-
+class LocalUpscaling(LocalProblems):
+    
     def __init__(self, mesh_file = None, boundary_condition_type = None):
         initial_time = time.time()
 
-        print("\n########## Local upscaling class initialized ##########")
-        lp = LocalProblems(mesh_file, boundary_condition_type)
-
-        #self.number_volumes_local_problem = self.lp.number_volumes_local_problem
-        # self.number_coarse_volumes = self.lp.number_coarse_volumes
-        # self.x = self.lp.x
-        # self.y = self.lp.y
-        # self.z = self.lp.z
-        #
-        # # Parameters that need to be accessed in IMEX dataset
-        # self.viscosity = 1
-        # self.face_area = 1
+        px, py, pz = self.run(mesh_file, boundary_condition_type)
 
         final_time = time.time()
         print("\nThe upscaling lasted {0}s".format(final_time-initial_time))

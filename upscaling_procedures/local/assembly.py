@@ -37,25 +37,25 @@ class Assembly:
         """
         Assembly of local problems to generate the transmissibility matrix
         """
-        self.transmissibilities = np.array([])
+        i = self.coarse_volume
 
-        for i in range(self.number_coarse_volumes):
-            print("Assembly of local problem {}".format(i))
-            faces_local_ids = self.coarse.elements[i].faces.internal # Local IDs from the internal faces from a coarse volume
-            equivalent_permeability = self.equivalent_permeability(i, faces_local_ids)
-            equivalent_permeability = lil_matrix.toarray(equivalent_permeability)
-            adjacent_volumes = self.coarse.elements[i].faces.bridge_adjacencies(faces_local_ids, 2, 3) # Local IDs from both the neighbors from each of the internal faces
-            adjacent_volumes_flatten = adjacent_volumes.flatten()
-            neighbors_centers = np.reshape(self.coarse.elements[i].volumes.center[adjacent_volumes_flatten], newshape = (len(faces_local_ids), 6))
-            neighbors_centers[:, 3:6] = neighbors_centers[:, 3:6]*(-1)
-            centers_distance = np.linalg.norm((neighbors_centers[:, 0:3] + neighbors_centers[:, 3:6]), axis = 1); # Calculates the distante between the face's neighbors centers
-            transmissibility = lil_matrix((int(self.number_volumes_local_problem), int(self.number_volumes_local_problem)), dtype = float)
+        print("Assembly of local problem {}".format(i))
+        faces_local_ids = self.coarse.elements[i].faces.internal # Local IDs from the internal faces from a coarse volume
+        equivalent_permeability = self.equivalent_permeability(i, faces_local_ids)
+        equivalent_permeability = lil_matrix.toarray(equivalent_permeability)
+        adjacent_volumes = self.coarse.elements[i].faces.bridge_adjacencies(faces_local_ids, 2, 3) # Local IDs from both the neighbors from each of the internal faces
+        adjacent_volumes_flatten = adjacent_volumes.flatten()
+        neighbors_centers = np.reshape(self.coarse.elements[i].volumes.center[adjacent_volumes_flatten], newshape = (len(faces_local_ids), 6))
+        neighbors_centers[:, 3:6] = neighbors_centers[:, 3:6]*(-1)
+        centers_distance = np.linalg.norm((neighbors_centers[:, 0:3] + neighbors_centers[:, 3:6]), axis = 1); # Calculates the distante between the face's neighbors centers
+        transmissibility = lil_matrix((int(self.number_volumes_local_problem), int(self.number_volumes_local_problem)), dtype = float)
 
-            for j in range(len(faces_local_ids)):
-                id1 = int(adjacent_volumes[j,0]) # ID of the first neighbor from the face
-                id2 = int(adjacent_volumes[j,1]) # ID of the second neighbor from the face
-                transmissibility[id1,id2] += equivalent_permeability[faces_local_ids[j]]/centers_distance[j]
-                transmissibility[id2,id1] += equivalent_permeability[faces_local_ids[j]]/centers_distance[j]
+        for j in range(len(faces_local_ids)):
+            id1 = int(adjacent_volumes[j,0]) # ID of the first neighbor from the face
+            id2 = int(adjacent_volumes[j,1]) # ID of the second neighbor from the face
+            transmissibility[id1,id2] += equivalent_permeability[faces_local_ids[j]]/centers_distance[j]
+            transmissibility[id2,id1] += equivalent_permeability[faces_local_ids[j]]/centers_distance[j]
 
-            lil_matrix.setdiag(transmissibility,(-1)*transmissibility.sum(axis = 1))
-            self.transmissibilities = np.append(self.transmissibilities, transmissibility) # Store transmissibility
+        lil_matrix.setdiag(transmissibility,(-1)*transmissibility.sum(axis = 1))
+
+        return transmissibility

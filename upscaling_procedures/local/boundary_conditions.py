@@ -7,7 +7,7 @@ class BoundaryConditions(QuickPreprocessor):
     def __init__(self, boundary_condition_type):
         self.boundary_condition_type = boundary_condition_type
 
-    def set_boundary_conditions(self, direction):
+    def set_boundary_conditions(self, direction, transmissibility):
         """
         Indicates which function must be executed to set boundary conditions acording to the option informed by the user.
         """
@@ -34,29 +34,31 @@ class BoundaryConditions(QuickPreprocessor):
             self.perpendicular_direction_2 = self.y
             self.number_faces_coarse_face = int((self.number_elements_x_direction/self.ny)*(self.number_elements_y_direction/self.ny))
 
-        self.boundary_conditions_dictionary.get(self.boundary_condition_type, "\nprint('Invalid boundary condition')")() # Execute the correct boundary condition function
+        transmissibility = transmissibility
+        transmissibility, source = self.boundary_conditions_dictionary.get(self.boundary_condition_type, "\nprint('Invalid boundary condition')")(transmissibility) # Execute the correct boundary condition function
 
-    def fixed_constant_pressure(self):
+        return transmissibility, source
+
+    def fixed_constant_pressure(self, transmissibility):
         """
         Function to apply fixed constant pressure boundary condition, it returns a transmissibility and a source/sink matrix modified.
         """
+        print('Setting boundary conditions of local problem {}'.format(self.coarse_volume))
         correct_volumes_group_1, correct_volumes_group_2 = self.identify_top_bottom_volumes()
-        self.sources = np.array([])
 
-        for i in range(self.number_coarse_volumes):
-            volumes_group_1 = correct_volumes_group_1[i]
-            volumes_group_2 = correct_volumes_group_2[i]
-            transmissibility = self.transmissibilities[i]
-            transmissibility[volumes_group_1] = 0
-            transmissibility[volumes_group_2] = 0
-            transmissibility[volumes_group_1, volumes_group_1] = 1
-            transmissibility[volumes_group_2, volumes_group_2] = 1
-            source = lil_matrix((int(self.number_volumes_local_problem), 1), dtype = 'float')
-            source[volumes_group_1] = self.pressure_gradient
-            source[volumes_group_2] = 0
-            self.sources = np.append(self.sources, source)
+        volumes_group_1 = correct_volumes_group_1
+        volumes_group_2 = correct_volumes_group_2
+        transmissibility[volumes_group_1] = 0
+        transmissibility[volumes_group_2] = 0
+        transmissibility[volumes_group_1, volumes_group_1] = 1
+        transmissibility[volumes_group_2, volumes_group_2] = 1
+        source = lil_matrix((int(self.number_volumes_local_problem), 1), dtype = 'float')
+        source[volumes_group_1] = self.pressure_gradient
+        source[volumes_group_2] = 0
 
-        print('\nFixed constant pressure boundary condition applied')
+        print('Fixed constant pressure boundary condition applied')
+
+        return transmissibility, source
 
     # Depending on the identify_side_volumes function
     def fixed_linear_pressure(self):

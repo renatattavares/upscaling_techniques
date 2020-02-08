@@ -1,3 +1,4 @@
+from upscaling_procedures.local.local_problems import LocalProblems
 from upscaling_procedures.local.local_upscaling import LocalUpscaling
 #from memory_profiler import profile
 

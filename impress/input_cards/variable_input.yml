@@ -34,20 +34,6 @@ coarse_pressure:
   sparse: True
   level: 1
 
-transmissibility:
-  type: volumes
-  data size: 15625
-  data type: float
-  sparse: True
-  level: 1
-
-source:
-  type: volumes
-  data size: 125
-  data type: float
-  sparse: True
-  level: 1
-
 permeability:
   type: volumes
   data size: 3

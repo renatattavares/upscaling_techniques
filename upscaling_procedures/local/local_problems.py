@@ -12,7 +12,8 @@ from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as im
 
 class LocalProblems(BoundaryConditions, Solver, Assembly):
 
-    def __init__(self, mesh_file = None, boundary_condition_type = None):
+    @profile
+    def run(self, mesh_file = None, boundary_condition_type = None):
 
         print('\n##### Treatment of local problems #####')
 
@@ -42,22 +43,26 @@ class LocalProblems(BoundaryConditions, Solver, Assembly):
             'y': self.y,
             'z': self.z
             }
-        # Set and solve local problems in x, y and z directions
+
+        self.pressure_x = np.array([])
+        self.pressure_y = np.array([])
+        self.pressure_z = np.array([])
+
         for i in self.direction_string:
-            print('\nAssembly of local problems in {} direction...'.format(i))
-            start = time.time()
-            self.assembly_local_problem()
-            end = time.time()
-            print("\nThis step lasted {}".format(end-start))
+            print('\n##### Local problems in {} direction #####'.format(i))
 
-            print('\nSetting boundary conditions in {} direction...'.format(i))
-            start = time.time()
-            self.set_boundary_conditions(i)
-            end = time.time()
-            print("\nThis step lasted {}".format(end-start))
+            for j in range(self.number_coarse_volumes):
+                self.coarse_volume = j
+                transmissibility = self.assembly_local_problem()
+                transmissibility, source = self.set_boundary_conditions(i,transmissibility)
+                pressure = self.solve_local_problems(transmissibility, source)
+                print('\n')
 
-            print('\nSolving local problems in {} direction...'.format(i))
-            start = time.time()
-            self.solve_local_problems()
-            end = time.time()
-            print("\nThis step lasted {}".format(end-start))
+                if i == 'x':
+                    self.pressure_x = np.append(self.pressure_x, pressure)
+                elif i == 'y':
+                    self.pressure_y = np.append(self.pressure_y, pressure)
+                elif i == 'z':
+                    self.pressure_z = np.append(self.pressure_z, pressure)
+
+        return self.pressure_x, self.pressure_y, self.pressure_z
