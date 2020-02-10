@@ -42,7 +42,10 @@ class Assembly:
         print("Assembly of local problem {}".format(i))
         faces_local_ids = self.coarse.elements[i].faces.internal # Local IDs from the internal faces from a coarse volume
         equivalent_permeability = self.equivalent_permeability(i, faces_local_ids)
+        global_faces_ids = self.coarse.elements[i].faces.global_id[faces_local_ids]
         equivalent_permeability = lil_matrix.toarray(equivalent_permeability)
+        for z in range(len(global_faces_ids)):
+            self.mesh.equivalent_permeability[int(global_faces_ids[z])] = int(equivalent_permeability[z]) 
         adjacent_volumes = self.coarse.elements[i].faces.bridge_adjacencies(faces_local_ids, 2, 3) # Local IDs from both the neighbors from each of the internal faces
         adjacent_volumes_flatten = adjacent_volumes.flatten()
         neighbors_centers = np.reshape(self.coarse.elements[i].volumes.center[adjacent_volumes_flatten], newshape = (len(faces_local_ids), 6))

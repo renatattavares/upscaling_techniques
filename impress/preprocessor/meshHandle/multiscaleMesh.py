@@ -36,8 +36,8 @@ class FineScaleMeshMS(FineScaleMesh):
             el(i,self.coarse)
 
     def init_entities(self):
-        # self.nodes = MeshEntitiesMS(self.core, entity_type="node")
-        # self.edges = MeshEntitiesMS(self.core, entity_type="edges")
+        self.nodes = MeshEntitiesMS(self.core, entity_type="node")
+        self.edges = MeshEntitiesMS(self.core, entity_type="edges")
         self.faces = MeshEntitiesMS(self.core, entity_type="faces")
         if self.dim == 3:
             self.volumes = MeshEntitiesMS(self.core, entity_type="volumes")
@@ -90,8 +90,8 @@ class CoarseVolume(FineScaleMeshMS):
             exec(command)
 
     def __call__(self, i, general):
-        #self.nodes.enhance(i, general)
-        #self.edges.enhance(i, general)
+        self.nodes.enhance(i, general)
+        self.edges.enhance(i, general)
         self.faces.enhance(i, general)
         if self.dim == 3:
             self.volumes.enhance(i, general)

@@ -54,3 +54,17 @@ porosity:
   data type: float
   sparse: False
   level: 0
+
+parallel_direction:
+  type: faces
+  data size: 1
+  data type: int
+  sparse: False
+  level: 0
+
+equivalent_permeability:
+  type: faces
+  data size: 1
+  data type: float
+  sparse: False
+  level: 0

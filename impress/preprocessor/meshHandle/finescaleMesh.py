@@ -49,16 +49,12 @@ class FineScaleMesh:
             return len(self.faces)
 
     def macro_dim(self):
-        # coords = self.core.mb.get_coords(self.core.all_nodes).reshape(len(self.core.all_nodes),3)
-        # min_coord = self.nodes.coords[:].min(axis = 0)
-        # max_coord  = self.nodes.coords[:].max(axis = 0)
-        # self.rx = (min_coord[0], max_coord[0])
-        # self.ry = (min_coord[1], max_coord[1])
-        # self.rz= (min_coord[2], max_coord[2])
-
-        self.rx = (0, 20)
-        self.ry = (0, 20)
-        self.rz = (0, 20)
+        coords = self.core.mb.get_coords(self.core.all_nodes).reshape(len(self.core.all_nodes),3)
+        min_coord = self.nodes.coords[:].min(axis = 0)
+        max_coord  = self.nodes.coords[:].max(axis = 0)
+        self.rx = (min_coord[0], max_coord[0])
+        self.ry = (min_coord[1], max_coord[1])
+        self.rz= (min_coord[2], max_coord[2])
 
     def init_dimmension(self):
         # center = MoabVariable(self.core, data_size=3, var_type=0, data_format='float', name_tag='CENTER', data_density='dense')

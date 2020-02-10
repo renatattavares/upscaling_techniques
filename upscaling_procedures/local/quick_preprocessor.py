@@ -32,7 +32,7 @@ class QuickPreprocessor:
         direction_vector = np.ndarray(shape = np.shape(normal_boundary_faces), dtype = float)
         direction_vector = np.full_like(direction_vector, self.direction) # Vectorization
 
-            # Cross product and norm
+        # Cross product and norm
         cross_product = np.cross(normal_boundary_faces, direction_vector)
         norm_cross_product = np.linalg.norm(cross_product, axis = 1)
 
@@ -65,14 +65,36 @@ class QuickPreprocessor:
         correct_volumes_group_1 = self.coarse.elements[i].faces.bridge_adjacencies(local_ids_group_1, 2, 3).flatten()
         correct_volumes_group_2 = self.coarse.elements[i].faces.bridge_adjacencies(local_ids_group_2, 2, 3).flatten()
 
-        # if np.array_equal(self.direction, self.x) is True:
-        #     self.correct_volumes_x = correct_volumes_group_1
-        # elif np.array_equal(self.direction, self.y) is True:
-        #     self.correct_volumes_y = correct_volumes_group_1
-        # elif np.array_equal(self.direction, self.z) is True:
-        #     self.correct_volumes_z = correct_volumes_group_1
+        if np.array_equal(self.direction, self.x) is True:
+            self.correct_volumes_x = np.append(self.correct_volumes_x, correct_volumes_group_1)
+        elif np.array_equal(self.direction, self.y) is True:
+            self.correct_volumes_y = np.append(self.correct_volumes_y, correct_volumes_group_1)
+        elif np.array_equal(self.direction, self.z) is True:
+            self.correct_volumes_z = np.append(self.correct_volumes_z, correct_volumes_group_1)
 
         return correct_volumes_group_1, correct_volumes_group_2
 
     def identify_side_volumes(self):
         pass
+
+    def check_parallel_direction(self):
+        """
+        Identifies the direction that is parallel to the normal vector of each face
+        """
+        for i,j in zip(self.direction_string, np.arange(3)):
+            self.direction = self.directions_dictionary.get(i)
+            global_ids_faces = np.arange(len(self.mesh.faces))
+            normal_faces = self.mesh.faces.normal[:]
+            direction_vector = np.ndarray(shape = np.shape(normal_faces), dtype = float)
+            direction_vector = np.full_like(direction_vector, self.direction)
+
+            # Cross product and norm
+            cross_product = np.cross(normal_faces, direction_vector)
+            norm_cross_product = np.linalg.norm(cross_product, axis = 1)
+
+            # Verify which norms are one (if norm == 1, the face is parallel to the direction)
+            correct_faces = np.isin(norm_cross_product, 1)
+            index_correct_faces = np.where(correct_faces == True)[0]
+            correct_faces = global_ids_faces[index_correct_faces]
+
+            self.mesh.parallel_direction[correct_faces] = int(j)
