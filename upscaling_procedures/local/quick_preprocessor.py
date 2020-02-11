@@ -81,10 +81,13 @@ class QuickPreprocessor:
         """
         Identifies the direction that is parallel to the normal vector of each face
         """
-        for i,j in zip(self.direction_string, np.arange(3)):
+        self.mesh.parallel_direction[:] = 4
+        j = 0
+
+        for i in self.direction_string:
             self.direction = self.directions_dictionary.get(i)
             global_ids_faces = np.arange(len(self.mesh.faces))
-            normal_faces = self.mesh.faces.normal[:]
+            normal_faces = self.mesh.faces.normal[global_ids_faces]
             direction_vector = np.ndarray(shape = np.shape(normal_faces), dtype = float)
             direction_vector = np.full_like(direction_vector, self.direction)
 
@@ -93,8 +96,8 @@ class QuickPreprocessor:
             norm_cross_product = np.linalg.norm(cross_product, axis = 1)
 
             # Verify which norms are one (if norm == 1, the face is parallel to the direction)
-            correct_faces = np.isin(norm_cross_product, 1)
+            correct_faces = np.isin(norm_cross_product, 0)
             index_correct_faces = np.where(correct_faces == True)[0]
             correct_faces = global_ids_faces[index_correct_faces]
-
             self.mesh.parallel_direction[correct_faces] = int(j)
+            j+= 1

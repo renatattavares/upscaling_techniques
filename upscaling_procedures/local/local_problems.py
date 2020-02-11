@@ -47,9 +47,9 @@ class LocalProblems(BoundaryConditions, Solver, Assembly):
         self.pressure_x = np.array([])
         self.pressure_y = np.array([])
         self.pressure_z = np.array([])
-        self.correct_volumes_x = np.array([])
-        self.correct_volumes_y = np.array([])
-        self.correct_volumes_z = np.array([])
+        self.correct_volumes_x = np.array([], dtype = int)
+        self.correct_volumes_y = np.array([], dtype = int)
+        self.correct_volumes_z = np.array([], dtype = int)
 
         self.run()
 
