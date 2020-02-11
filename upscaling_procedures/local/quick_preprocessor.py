@@ -23,23 +23,23 @@ class QuickPreprocessor:
 
     def identify_top_bottom_volumes(self):
 
+        if np.array_equal(self.direction, self.x) == True:
+            direction = 0
+        elif np.array_equal(self.direction, self.y) == True:
+            direction = 1
+        elif np.array_equal(self.direction, self.z) == True:
+            direction = 2
+
         i = self.coarse_volume
         correct_volumes_group_1 = np.zeros((1, self.number_faces_coarse_face), dtype = int)
         correct_volumes_group_2 = np.zeros((1, self.number_faces_coarse_face), dtype = int)
 
         boundary_faces = self.coarse.elements[i].faces.boundary # Local IDs of boundary faces of a coarse volume
-        normal_boundary_faces = self.coarse.elements[i].faces.normal[boundary_faces] # Normal vector of boundary faces of a coarse volumes
-        direction_vector = np.ndarray(shape = np.shape(normal_boundary_faces), dtype = float)
-        direction_vector = np.full_like(direction_vector, self.direction) # Vectorization
-
-        # Cross product and norm
-        cross_product = np.cross(normal_boundary_faces, direction_vector)
-        norm_cross_product = np.linalg.norm(cross_product, axis = 1)
-
-        # Verify which norms are zero (if norm == 0, the face is perpendicular to the direction)
-        correct_faces = np.isin(norm_cross_product, 0)
-        index_correct_faces = np.where(correct_faces == True)[0]
-        correct_faces = boundary_faces[index_correct_faces]
+        global_ids_faces = self.coarse.elements[i].faces.global_id[boundary_faces]
+        parallel_direction = self.mesh.parallel_direction[global_ids_faces]
+        index_faces_direction = np.isin(parallel_direction, direction)
+        index_faces_direction = np.where(index_faces_direction == True)[0]
+        correct_faces = boundary_faces[index_faces_direction]
 
         # Separate faces in two groups
         global_ids_correct_faces = self.coarse.elements[i].faces.global_id[correct_faces]
