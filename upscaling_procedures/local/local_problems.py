@@ -4,14 +4,15 @@ Module for treatment of local problems to apply local upscaling technique in str
 import time
 #import xlsxwriter
 import numpy as np
+from scipy.sparse import lil_matrix
+from scipy.sparse.linalg import spsolve
 from imex_integration.read_dataset import read_dataset
-from upscaling_procedures.local.solver_local_problems import Solver
-from upscaling_procedures.local.boundary_conditions import BoundaryConditions
 from upscaling_procedures.local.assembly import Assembly
-from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
+from upscaling_procedures.local.boundary_conditions import BoundaryConditions
 from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as impress
+from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 
-class LocalProblems(BoundaryConditions, Solver, Assembly):
+class LocalProblems(Assembly, BoundaryConditions):
 
     def __init__(self, mesh_file = None, boundary_condition_type = None, dataset = None):
 
@@ -41,7 +42,7 @@ class LocalProblems(BoundaryConditions, Solver, Assembly):
         self.get_mesh_informations(coarse_config())
 
         # Solve local problems
-        self.run()
+        self.solve_local_problems()
 
     def preprocess_mesh(self):
 
@@ -75,7 +76,18 @@ class LocalProblems(BoundaryConditions, Solver, Assembly):
             'z': self.z
             }
 
-    def run(self):
+    def solver(self, transmissibility, source):
+
+        i = self.coarse_volume
+        print("Solving local problem {0}".format(i))
+        transmissibility = lil_matrix.tocsr(transmissibility)
+        source = lil_matrix.tocsr(source)
+
+        pressure = spsolve(transmissibility,source)
+
+        return pressure
+
+    def solve_local_problems(self):
 
         self.pressure_x = np.array([])
         self.pressure_y = np.array([])
@@ -88,7 +100,7 @@ class LocalProblems(BoundaryConditions, Solver, Assembly):
                 self.coarse_volume = j
                 transmissibility = self.assembly_local_problem()
                 transmissibility, source = self.set_boundary_conditions(i,transmissibility)
-                pressure = self.solve_local_problems(transmissibility, source)
+                pressure = self.solver(transmissibility, source)
                 print('\n')
 
                 if i == 'x':

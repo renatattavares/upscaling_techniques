@@ -27,13 +27,6 @@ pressure_z:
   sparse: False
   level: 0
 
-coarse_pressure:
-  type: volumes
-  data size: 1
-  data type: float
-  sparse: True
-  level: 1
-
 permeability:
   type: volumes
   data size: 3
@@ -41,7 +34,7 @@ permeability:
   sparse: False
   level: 0
 
-upscaled_permeability:
+effective_permeability:
   type: volumes
   data size: 3
   data type: float
@@ -59,12 +52,5 @@ parallel_direction:
   type: faces
   data size: 1
   data type: int
-  sparse: False
-  level: 0
-
-equivalent_permeability:
-  type: faces
-  data size: 1
-  data type: float
   sparse: False
   level: 0

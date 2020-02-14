@@ -27,7 +27,6 @@ class Assembly:
             sum = permeability_direction[:,0] + permeability_direction[:,1]
             equivalent_permeability[correct_faces] = 2*multiplication/sum
             global_faces_ids = self.coarse.elements[coarse_volume].faces.global_id[correct_faces]
-            self.mesh.equivalent_permeability[global_faces_ids] = np.reshape(equivalent_permeability[correct_faces], newshape = (len(equivalent_permeability[correct_faces]), 1))
 
         return equivalent_permeability
 

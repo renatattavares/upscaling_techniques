@@ -66,13 +66,13 @@ class QuickPreprocessor:
 
         correct_volumes_group_1 = self.coarse.elements[i].faces.bridge_adjacencies(local_ids_group_1, 2, 3).flatten()
         correct_volumes_group_2 = self.coarse.elements[i].faces.bridge_adjacencies(local_ids_group_2, 2, 3).flatten()
-
-        if np.array_equal(self.direction, self.x) is True:
-            self.correct_volumes_x = np.append(self.correct_volumes_x, correct_volumes_group_1)
-        elif np.array_equal(self.direction, self.y) is True:
-            self.correct_volumes_y = np.append(self.correct_volumes_y, correct_volumes_group_1)
-        elif np.array_equal(self.direction, self.z) is True:
-            self.correct_volumes_z = np.append(self.correct_volumes_z, correct_volumes_group_1)
+        # 
+        # if np.array_equal(self.direction, self.x) is True:
+        #     self.correct_volumes_x = np.append(self.correct_volumes_x, correct_volumes_group_1)
+        # elif np.array_equal(self.direction, self.y) is True:
+        #     self.correct_volumes_y = np.append(self.correct_volumes_y, correct_volumes_group_1)
+        # elif np.array_equal(self.direction, self.z) is True:
+        #     self.correct_volumes_z = np.append(self.correct_volumes_z, correct_volumes_group_1)
 
         return correct_volumes_group_1, correct_volumes_group_2
 
