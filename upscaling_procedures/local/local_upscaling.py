@@ -7,21 +7,25 @@ from upscaling_procedures.local.local_problems import LocalProblems
 
 class LocalUpscaling(LocalProblems):
 
-    def __init__(self, mesh_file = None, boundary_condition_type = None):
+    def __init__(self, mesh_file = None, boundary_condition_type = None, dataset = None):
         initial_time = time.time()
 
-        lp = LocalProblems(mesh_file, boundary_condition_type)
-        self.mesh = lp.mesh
-        self.coarse = lp.coarse
-        self.number_coarse_volumes = lp.number_coarse_volumes
-        self.number_faces_coarse_face = lp.number_faces_coarse_face
-        self.direction_string = lp.direction_string
-        self.directions_dictionary = lp.directions_dictionary
-        self.px = lp.pressure_x
-        self.py = lp.pressure_y
-        self.pz = lp.pressure_z
-        self.number_volumes_local_problem = lp.number_volumes_local_problem
-        self.upscale_permeability()
+        if mesh_file is None:
+            lp = LocalProblems(mesh_file = None, boundary_condition_type = 1, dataset = dataset)
+        else:
+            lp = LocalProblems(mesh_file = mesh_file, boundary_condition_type = 1, dataset = None)
+
+        # self.mesh = lp.mesh
+        # self.coarse = lp.coarse
+        # self.number_coarse_volumes = lp.number_coarse_volumes
+        # self.number_faces_coarse_face = lp.number_faces_coarse_face
+        # self.direction_string = lp.direction_string
+        # self.directions_dictionary = lp.directions_dictionary
+        # self.px = lp.pressure_x
+        # self.py = lp.pressure_y
+        # self.pz = lp.pressure_z
+        # self.number_volumes_local_problem = lp.number_volumes_local_problem
+        # self.upscale_permeability()
 
         final_time = time.time()
         print("\nThe upscaling lasted {0}s".format(final_time-initial_time))

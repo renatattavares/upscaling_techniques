@@ -2,8 +2,9 @@
 Module for treatment of local problems to apply local upscaling technique in structured tridimensional meshes
 """
 import time
-import numpy as np
 #import xlsxwriter
+import numpy as np
+from imex_integration.read_dataset import read_dataset
 from upscaling_procedures.local.solver_local_problems import Solver
 from upscaling_procedures.local.boundary_conditions import BoundaryConditions
 from upscaling_procedures.local.assembly import Assembly
@@ -12,22 +13,58 @@ from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as im
 
 class LocalProblems(BoundaryConditions, Solver, Assembly):
 
-    def __init__(self, mesh_file = None, boundary_condition_type = None):
+    def __init__(self, mesh_file = None, boundary_condition_type = None, dataset = None):
 
         print('\n##### Treatment of local problems #####')
 
+        if mesh_file is None:
+            print('\nMesh informations will be accessed from {} dataset'.format(dataset))
+            self.mode = 'integrated'
+            self.porosity, self.permeability = read_dataset(dataset)
+            self.mesh_file = 'generated_mesh.h5m'
+
+        else:
+            print('\nMesh informations will be set automatically')
+            self.mode = 'auto'
+            self.mesh_file = mesh_file
+
+        # Read boundary condition chosen
+        self.boundary_condition_type = boundary_condition_type
+
         # Preprocessing mesh with IMPRESS
+        self.preprocess_mesh()
+
+        # Setting variables
+        self.set_simulation_variables()
+        self.set_coordinate_system()
+        self.check_parallel_direction()
+        self.get_mesh_informations(coarse_config())
+
+        # Solve local problems
+        self.run()
+
+    def preprocess_mesh(self):
+
         print('\nPre-processing mesh with IMPRESS...')
         start = time.time()
-        self.mesh = impress(mesh_file, dim = 3) # IMPRESS' object
+        self.mesh = impress(self.mesh_file, dim = 3) # IMPRESS' object
+        self.coarse = self.mesh.coarse
         end = time.time()
         print("\nThis step lasted {0}s".format(end-start))
 
-        # Setting variables
-        print('\nAccessing coarsening informations from IMPRESS and setting important variables...')
-        self.mesh.permeability[:] = np.array([1,1,1])
-        self.mesh.porosity[:] = 1
-        self.mesh.equivalent_permeability[:] = 0
+    def set_simulation_variables(self):
+
+        if self.mode is 'auto':
+            self.mesh.permeability[:] = np.array([1,1,1])
+            self.mesh.porosity[:] = 1
+
+        else:
+            self.mesh.permeability[:] = self.permeability
+            self.mesh.porosity[:] = 1
+            self.boundary_condition_type = boundary_condition_type
+
+
+    def set_coordinate_system(self):
         self.x = np.array([1,0,0])
         self.y = np.array([0,1,0])
         self.z = np.array([0,0,1])
@@ -37,23 +74,13 @@ class LocalProblems(BoundaryConditions, Solver, Assembly):
             'y': self.y,
             'z': self.z
             }
-        self.check_parallel_direction()
-        self.get_mesh_informations(coarse_config())
-        self.coarse = self.mesh.coarse
-        self.boundary_condition_type = boundary_condition_type
-        self.number_coarse_volumes = len(self.coarse.elements) # Number of volumes from the coarse mesh
-        self.number_volumes_local_problem = len(self.mesh.volumes)/(self.nx*self.ny*self.nz) # Number of fine scale volumes inside a coarse volume
-        self.pressure_gradient = 1
+
+    def run(self):
+
         self.pressure_x = np.array([])
         self.pressure_y = np.array([])
         self.pressure_z = np.array([])
-        self.correct_volumes_x = np.array([], dtype = int)
-        self.correct_volumes_y = np.array([], dtype = int)
-        self.correct_volumes_z = np.array([], dtype = int)
 
-        self.run()
-
-    def run(self):
         for i in self.direction_string:
             print('\n##### Local problems in {} direction #####'.format(i))
 

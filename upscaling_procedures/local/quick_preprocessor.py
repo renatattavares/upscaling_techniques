@@ -18,6 +18,8 @@ class QuickPreprocessor:
         self.number_elements_x_direction = data['x']
         self.number_elements_y_direction = data['y']
         self.number_elements_z_direction = data['z']
+        self.number_coarse_volumes = len(self.coarse.elements) # Number of volumes from the coarse mesh
+        self.number_volumes_local_problem = len(self.mesh.volumes)/(self.nx*self.ny*self.nz) # Number of fine scale volumes inside a coarse volume
 
         print('\nMesh informations accessed')
 

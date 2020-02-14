@@ -53,7 +53,7 @@ class BoundaryConditions(QuickPreprocessor):
         transmissibility[volumes_group_1, volumes_group_1] = 1
         transmissibility[volumes_group_2, volumes_group_2] = 1
         source = lil_matrix((int(self.number_volumes_local_problem), 1), dtype = 'float')
-        source[volumes_group_1] = self.pressure_gradient
+        source[volumes_group_1] = 1
         source[volumes_group_2] = 0
 
         print('Fixed constant pressure boundary condition applied')
