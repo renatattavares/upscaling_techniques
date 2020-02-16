@@ -14,8 +14,8 @@ def read_dataset(dataset_file):
     number_elements, length_elements = Interpreter.read_mesh_data(lines)
     porosity_data = Interpreter.read_porosity(lines)
     permeability_data = Interpreter.read_permeability(lines)
-    generator = MeshConstructor(number_elements, length_elements)
+    #generator = MeshConstructor(number_elements, length_elements)
 
     print('\n##### Mesh file created #####')
 
-    return porosity_data, permeability_data
+    return porosity_data[0:8000], permeability_data[0:8000]

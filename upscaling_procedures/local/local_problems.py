@@ -2,6 +2,7 @@
 Module for treatment of local problems to apply local upscaling technique in structured tridimensional meshes
 """
 import time
+import copy
 #import xlsxwriter
 import numpy as np
 from scipy.sparse import lil_matrix
@@ -22,7 +23,7 @@ class LocalProblems(Assembly, BoundaryConditions):
             print('\nMesh informations will be accessed from {} dataset'.format(dataset))
             self.mode = 'integrated'
             self.porosity, self.permeability = read_dataset(dataset)
-            self.mesh_file = 'generated_mesh.h5m'
+            self.mesh_file = 'mesh/20.h5m'
 
         else:
             print('\nMesh informations will be set automatically')
@@ -59,10 +60,12 @@ class LocalProblems(Assembly, BoundaryConditions):
             self.mesh.permeability[:] = np.array([1,1,1])
             self.mesh.porosity[:] = 1
 
-        else:
+        elif self.mode is 'integrated':
+            self.permeability[:,0] = self.porosity + 5
+            self.permeability[:,1] = self.porosity + 5
+            self.permeability[:,2] = self.porosity + 5
             self.mesh.permeability[:] = self.permeability
-            self.mesh.porosity[:] = 1
-            self.boundary_condition_type = boundary_condition_type
+            self.mesh.porosity[:] = self.porosity
 
 
     def set_coordinate_system(self):
@@ -79,7 +82,7 @@ class LocalProblems(Assembly, BoundaryConditions):
     def solver(self, transmissibility, source):
 
         i = self.coarse_volume
-        print("Solving local problem {0}".format(i))
+        #print("Solving local problem {0}".format(i))
         transmissibility = lil_matrix.tocsr(transmissibility)
         source = lil_matrix.tocsr(source)
 
@@ -93,19 +96,17 @@ class LocalProblems(Assembly, BoundaryConditions):
         self.pressure_y = np.array([])
         self.pressure_z = np.array([])
 
-        for i in self.direction_string:
-            print('\n##### Local problems in {} direction #####'.format(i))
-
-            for j in range(self.number_coarse_volumes):
-                self.coarse_volume = j
-                transmissibility = self.assembly_local_problem()
-                transmissibility, source = self.set_boundary_conditions(i,transmissibility)
+        for i in range(self.number_coarse_volumes):
+            print('\nSolving local problem {}'.format(i))
+            self.coarse_volume = i
+            general_transmissibility = self.assembly_local_problem()
+            for j in self.direction_string:
+                transmissibility, source = self.set_boundary_conditions(j, general_transmissibility)
                 pressure = self.solver(transmissibility, source)
-                print('\n')
 
-                if i == 'x':
+                if j == 'x':
                     self.pressure_x = np.append(self.pressure_x, pressure)
-                elif i == 'y':
+                elif j == 'y':
                     self.pressure_y = np.append(self.pressure_y, pressure)
-                elif i == 'z':
+                elif j == 'z':
                     self.pressure_z = np.append(self.pressure_z, pressure)

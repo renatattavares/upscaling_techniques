@@ -54,3 +54,10 @@ parallel_direction:
   data type: int
   sparse: False
   level: 0
+
+kefx:
+  type: volumes
+  data size: 1
+  data type: float
+  sparse: False
+  level: 0

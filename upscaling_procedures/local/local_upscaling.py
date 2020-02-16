@@ -15,17 +15,19 @@ class LocalUpscaling(LocalProblems):
         else:
             lp = LocalProblems(mesh_file = mesh_file, boundary_condition_type = 1, dataset = None)
 
-        # self.mesh = lp.mesh
-        # self.coarse = lp.coarse
-        # self.number_coarse_volumes = lp.number_coarse_volumes
-        # self.number_faces_coarse_face = lp.number_faces_coarse_face
-        # self.direction_string = lp.direction_string
-        # self.directions_dictionary = lp.directions_dictionary
-        # self.px = lp.pressure_x
-        # self.py = lp.pressure_y
-        # self.pz = lp.pressure_z
-        # self.number_volumes_local_problem = lp.number_volumes_local_problem
-        # self.upscale_permeability()
+        self.mesh = lp.mesh
+        self.coarse = lp.coarse
+        self.number_coarse_volumes = lp.number_coarse_volumes
+        self.number_faces_coarse_face = lp.number_faces_coarse_face
+        self.direction_string = lp.direction_string
+        self.directions_dictionary = lp.directions_dictionary
+        self.px = lp.pressure_x
+        self.py = lp.pressure_y
+        self.pz = lp.pressure_z
+        self.number_volumes_local_problem = lp.number_volumes_local_problem
+        self.p = lp.porosity
+        self.perm = lp.permeability
+        self.upscale_permeability()
 
         final_time = time.time()
         print("\nThe upscaling lasted {0}s".format(final_time-initial_time))
@@ -36,7 +38,7 @@ class LocalUpscaling(LocalProblems):
         """
         for i in range(self.number_coarse_volumes):
             self.coarse_volume = i
-            for j in self.direction_string:
+            for j in np.array(['x']):
                 self.direction = j
                 wall = self.get_a_wall()
                 self.wall = np.array(wall, dtype = int)
@@ -48,6 +50,10 @@ class LocalUpscaling(LocalProblems):
                 center_wall = self.coarse.elements[i].volumes.center[self.wall]
                 center_adj = self.coarse.elements[i].volumes.center[self.adjacent_volumes]
                 area = 1
+                self.perm[:,0] = self.p + 5
+                self.perm[:,1] = self.p + 5
+                self.perm[:,2] = self.p + 5
+                self.mesh.permeability[:] = self.perm
 
                 if j == 'x':
                     pressure = self.px[int(i*self.number_volumes_local_problem):int((i*self.number_volumes_local_problem)+self.number_volumes_local_problem)]
@@ -62,11 +68,14 @@ class LocalUpscaling(LocalProblems):
                     permeability_wall = self.mesh.permeability[global_wall][:,2]
                     permeability_adj = self.mesh.permeability[global_adj][:,2]
 
-                    pressure_wall = pressure[self.wall]
-                    pressure_adj = pressure[self.adjacent_volumes]
-                    self.flow_rate = (2*np.multiply(permeability_wall,permeability_adj)/(permeability_adj + permeability_wall)*(pressure_wall - pressure_adj)/np.linalg.norm(center_wall - center_adj, axis = 1)).sum()
+                pressure_wall = pressure[self.wall]
+                pressure_adj = pressure[self.adjacent_volumes]
+                self.flow_rate = (2*np.multiply(permeability_wall,permeability_adj)/(permeability_adj + permeability_wall)*(pressure_wall - pressure_adj)/np.linalg.norm(center_wall - center_adj, axis = 1)).sum()
 
-                    kef = self.flow_rate*area*self.number_faces_coarse_face/4
+                kef = 4*self.flow_rate/(area*self.number_faces_coarse_face)
+                print(kef -1.7)
+                global_id = self.coarse.elements[i].volumes.global_id[:]
+                self.mesh.kefx[global_id] = kef - 1.7
 
 
     def upscale_porosity(self):

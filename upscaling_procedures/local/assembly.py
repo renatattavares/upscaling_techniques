@@ -36,7 +36,7 @@ class Assembly:
         """
         i = self.coarse_volume
 
-        print("Assembly of local problem {}".format(i))
+        #print("Assembly of local problem {}".format(i))
         faces_local_ids = self.coarse.elements[i].faces.internal # Local IDs from the internal faces from a coarse volume
         equivalent_permeability = self.equivalent_permeability(i, faces_local_ids)
         adjacent_volumes = self.coarse.elements[i].faces.bridge_adjacencies(faces_local_ids, 2, 3) # Local IDs from both the neighbors from each of the internal faces

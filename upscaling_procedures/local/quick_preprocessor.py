@@ -19,7 +19,7 @@ class QuickPreprocessor:
         self.number_elements_y_direction = data['y']
         self.number_elements_z_direction = data['z']
         self.number_coarse_volumes = len(self.coarse.elements) # Number of volumes from the coarse mesh
-        self.number_volumes_local_problem = len(self.mesh.volumes)/(self.nx*self.ny*self.nz) # Number of fine scale volumes inside a coarse volume
+        self.number_volumes_local_problem = int(len(self.mesh.volumes)/(self.nx*self.ny*self.nz)) # Number of fine scale volumes inside a coarse volume
 
         print('\nMesh informations accessed')
 
@@ -66,7 +66,7 @@ class QuickPreprocessor:
 
         correct_volumes_group_1 = self.coarse.elements[i].faces.bridge_adjacencies(local_ids_group_1, 2, 3).flatten()
         correct_volumes_group_2 = self.coarse.elements[i].faces.bridge_adjacencies(local_ids_group_2, 2, 3).flatten()
-        # 
+        #
         # if np.array_equal(self.direction, self.x) is True:
         #     self.correct_volumes_x = np.append(self.correct_volumes_x, correct_volumes_group_1)
         # elif np.array_equal(self.direction, self.y) is True:
