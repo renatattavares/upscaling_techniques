@@ -23,7 +23,7 @@ class LocalProblems(Assembly, BoundaryConditions):
             print('\nMesh informations will be accessed from {} dataset'.format(dataset))
             self.mode = 'integrated'
             self.porosity, self.permeability = read_dataset(dataset)
-            self.mesh_file = 'mesh/20.h5m'
+            self.mesh_file = 'generated_mesh.h5m'
 
         else:
             print('\nMesh informations will be set automatically')
@@ -36,7 +36,7 @@ class LocalProblems(Assembly, BoundaryConditions):
         # Preprocessing mesh with IMPRESS
         self.preprocess_mesh()
 
-        # Setting variables
+        # Setting variables and informations
         self.set_simulation_variables()
         self.set_coordinate_system()
         self.check_parallel_direction()
@@ -61,9 +61,9 @@ class LocalProblems(Assembly, BoundaryConditions):
             self.mesh.porosity[:] = 1
 
         elif self.mode is 'integrated':
-            self.permeability[:,0] = self.porosity + 5
-            self.permeability[:,1] = self.porosity + 5
-            self.permeability[:,2] = self.porosity + 5
+            # self.permeability[:,0] = self.porosity + 5
+            # self.permeability[:,1] = self.porosity + 5
+            # self.permeability[:,2] = self.porosity + 5
             self.mesh.permeability[:] = self.permeability
             self.mesh.porosity[:] = self.porosity
 
