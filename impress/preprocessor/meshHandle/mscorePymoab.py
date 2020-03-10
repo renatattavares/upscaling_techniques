@@ -6,7 +6,7 @@ from . corePymoab import CoreMoab
 from pymoab import core, types, rng, topo_util
 from pymoab import skinner as sk
 import numpy as np
-#import time
+import time
 
 
 class MsCoreMoab(CoreMoab):

@@ -19,7 +19,7 @@ class Assembly:
             index_faces_direction = np.where(index_faces_direction == True)[0]
             correct_faces = faces_local_ids[index_faces_direction]
             adjacent_volumes = self.coarse.elements[coarse_volume].faces.bridge_adjacencies(correct_faces, 2, 3)
-            global_id_adjacent_volumes = self.coarse.elements[coarse_volume].volumes.global_id[adjacent_volumes]
+            global_id_adjacent_volumes = self.coarse.elements[coarse_volume].volumes.global_id[adjacent_volumes.flatten()]
             permeability = self.mesh.permeability[global_id_adjacent_volumes]
             permeability_direction = permeability[:,j]
             permeability_direction = np.reshape(permeability_direction, newshape = (len(adjacent_volumes), 2))

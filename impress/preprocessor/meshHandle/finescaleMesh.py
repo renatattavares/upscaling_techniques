@@ -11,12 +11,15 @@ from pymoab import core, types, rng, topo_util
 from . corePymoab import CoreMoab
 from . meshComponents import MeshEntities, MoabVariable
 import yaml
+import pickle
 
 print('Standard fine-scale mesh loaded: No multiscale components available')
 
 
 class FineScaleMesh:
-    def __init__(self, mesh_file, dim=3, var_config=None):
+    def __init__(self, mesh_file, dim=3, var_config=None, load = False):
+        self.load = load
+        self.mesh_file = mesh_file
         self.var_config = var_config
         self.dim = dim
         self.core = CoreMoab(mesh_file, dim)
@@ -25,31 +28,100 @@ class FineScaleMesh:
 
     def run(self):
         self.init_entities()
-        self.init_variables()
+        if not self.load:
+            self.init_variables()
+        else:
+            self.load_variables()
         self.macro_dim()
         self.init_dimmension()
 
+    def create_variable(self, name_tag, var_type="volumes", data_size=1, data_format="float", data_density="sparse",
+                 entity_index=None, create = True):
+        var = MoabVariable(self.core, data_size= data_size, var_type = var_type, data_format = data_format, name_tag = name_tag, data_density = data_density, entity_index = entity_index, create = create)
+        exec(f'self.{name_tag} = var')
+        self.var_handle_list.append(var)
+        return var
+
+    def save_variables(self, name_file):
+        self.core.mb.write_file('saves/'+name_file+'.h5m')
+        file = open('saves/'+name_file+'.imp', 'wb')
+        pickle.dump([(tags.name_tag, tags.var_type, tags.data_size, tags.data_format, tags.data_density) for tags in self.var_handle_list], file)
+        file.close()
+        return
+
     def init_variables(self):
+        self.var_handle_list = []
         if self.var_config is None:
             self.var_config = variableInit()
         for command in self.var_config.get_var(self.core.level):
             exec(command)
+        return
+
+    def load_variables(self):
+        self.var_handle_list = []
+        file = open(self.mesh_file.split('.')[0]+'.imp', 'rb')
+        tag_list = pickle.load(file)
+        file.close()
+        for tags in tag_list:
+            self.create_variable(name_tag = tags[0], var_type = tags[1], data_size = tags[2], data_format = tags[3], data_density = tags[4], create = False)
+        return
 
     def init_entities(self):
-        # self.nodes = MeshEntities(self.core, entity_type = "nodes")
-        # self.edges = MeshEntities(self.core, entity_type="edges")
+        self.nodes = MeshEntities(self.core, entity_type = "nodes")
+        self.edges = MeshEntities(self.core, entity_type="edges")
         self.faces = MeshEntities(self.core, entity_type = "faces")
         if self.dim == 3:
             self.volumes = MeshEntities(self.core, entity_type = "volumes")
-
+        return
     def __len__(self):
         if self.dim == 3:
             return len(self.volumes)
-        elif self.dim ==2:
+        elif self.dim == 2:
             return len(self.faces)
 
+    def load_array(self, type = None, array = None):
+        if type == None:
+            self.nodes.load_array(array)
+            self.edges.load_array(array)
+            self.faces.load_array(array)
+            self.volumes.load_array(array)
+        if type == 'nodes' or type == 0:
+            self.nodes.load_array(array)
+        if type == 'edges' or type == 1:
+            self.edges.load_array(array)
+        if type == 'faces' or type == 2:
+            self.faces.load_array(array)
+        if type == 'volumes' or type == 3:
+            self.volumes.load_array(array)
+
+    def to_moab(self):
+        for vars in self.var_handle_list:
+            vars.to_moab()
+
+
+    def to_numpy(self):
+        for vars in self.var_handle_list:
+            vars.to_numpy()
+
+
+    def unload_array(self, type = None, array = None):
+        if type == None:
+            self.nodes.unload_array(array)
+            self.edges.unload_array(array)
+            self.faces.unload_array(array)
+            self.volumes.unload_array(array)
+        if type == 'nodes' or type == 0:
+            self.nodes.unload_array(array)
+        if type == 'edges' or type == 1:
+            self.edges.unload_array(array)
+        if type == 'faces' or type == 2:
+            self.faces.unload_array(array)
+        if type == 'volumes' or type == 3:
+            self.volumes.unload_array(array)
+
+
     def macro_dim(self):
-        coords = self.core.mb.get_coords(self.core.all_nodes).reshape(len(self.core.all_nodes),3)
+        # coords = self.core.mb.get_coords(self.core.all_nodes).reshape(len(self.core.all_nodes),3)
         min_coord = self.nodes.coords[:].min(axis = 0)
         max_coord  = self.nodes.coords[:].max(axis = 0)
         self.rx = (min_coord[0], max_coord[0])
@@ -137,9 +209,6 @@ class FineScaleMesh:
             vol_eval = abs(np.dot(np.cross(vect_1, vect_2), vect_3)) / 6.0
         elif qtd_pts == 8:
             pass
-            #SEGUNDA ATIVIDADE PRA RENATINHA
-            #CALCULAR O VOLUME DO HEXAEDRO IERREGULAR DADO OS 8 PONTOS
-
             # pass
             # #pdb.set_trace()
             # vect_1 = coords[7] - coords[0]

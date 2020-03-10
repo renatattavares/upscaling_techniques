@@ -15,7 +15,7 @@ from impress.preprocessor.meshHandle.configTools.configClass import coarseningIn
 
 class LocalProblems(Assembly, BoundaryConditions):
 
-    def __init__(self, mesh_file = None, boundary_condition_type = None, dataset = None):
+    def __init__(self, mesh_file = None, dataset = None):
 
         print('\n##### Treatment of local problems #####')
 
@@ -31,7 +31,7 @@ class LocalProblems(Assembly, BoundaryConditions):
             self.mesh_file = mesh_file
 
         # Read boundary condition chosen
-        self.boundary_condition_type = boundary_condition_type
+        self.boundary_condition_type = 1
 
         # Preprocessing mesh with IMPRESS
         self.preprocess_mesh()

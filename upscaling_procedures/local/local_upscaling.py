@@ -7,13 +7,13 @@ from upscaling_procedures.local.local_problems import LocalProblems
 
 class LocalUpscaling:
 
-    def __init__(self, mesh_file = None, boundary_condition_type = None, dataset = None):
+    def __init__(self, mesh_file = None, dataset = None):
         initial_time = time.time()
 
         if mesh_file is None:
-            lp = LocalProblems(mesh_file = None, boundary_condition_type = 1, dataset = dataset)
+            lp = LocalProblems(mesh_file = None, dataset = dataset)
         else:
-            lp = LocalProblems(mesh_file = mesh_file, boundary_condition_type = 1, dataset = None)
+            lp = LocalProblems(mesh_file = mesh_file, dataset = None)
 
         self.lp = lp
 

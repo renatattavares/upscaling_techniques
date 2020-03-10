@@ -4,10 +4,13 @@ Module for management of fine scale mesh
 import time
 import pdb
 import numpy as np
+from . corePymoab import CoreMoab
+from . meshComponents import MeshEntities
 import hdmedians as hd
 import numpy as np
 import scipy as sp
 import scipy.spatial
+import collections
 
 print('Dual Coarse Mesh Module initialized')
 
@@ -65,6 +68,7 @@ class DualCoarseMesh:
         #pdb.set_trace()
 
     def find_coarse_edges(self):
+        edges = np.array([])
         coarse_edges = [np.array([])]* len(self.M.coarse._faces)
         for x in range(len(self.M.coarse.elements)):
             cneigh, cfaces  = self.M.coarse.iface_neighbors(x)
