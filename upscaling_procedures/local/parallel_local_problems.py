@@ -49,14 +49,14 @@ class ParallelLocalProblems(LocalProblems):
         print('\nSolving local problem {}'.format(coarse_volume))
         self.coarse_volume = coarse_volume
         general_transmissibility = self.assembly_local_problem()
+        p = []
+
         for j in self.direction_string:
             transmissibility, source = self.set_boundary_conditions(j, general_transmissibility)
             pressure = self.solver(transmissibility, source)
+            p.append(pressure)
 
-        #queue.put(pressure)
-
-    def distribute_data(self, q):
-        pass
+        queue.put(p)
 
     def create_processes(self):
 
@@ -72,5 +72,10 @@ class ParallelLocalProblems(LocalProblems):
         for p in processes:
             p.start()
 
-        for p in processes:
+        pressures = []
+
+        for p, q in zip(processes, queues):
             p.join()
+            pressures.append(q.get())
+
+        self.pressures = pressures
