@@ -20,8 +20,11 @@ class QuickPreprocessor:
         self.number_elements_z_direction = data['z']
         self.number_coarse_volumes = len(self.coarse.elements) # Number of volumes from the coarse mesh
         self.number_volumes_local_problem = int(len(self.mesh.volumes)/(self.nx*self.ny*self.nz)) # Number of fine scale volumes inside a coarse volume
+        self.coarse_face_x = []
+        self.coarse_face_y = []
+        self.coarse_face_z = []
 
-        print('\nMesh informations accessed')
+        print('\nMesh informations accessed and coarse faces lists created')
 
     def identify_top_bottom_volumes(self):
 
@@ -66,13 +69,15 @@ class QuickPreprocessor:
 
         correct_volumes_group_1 = self.coarse.elements[i].faces.bridge_adjacencies(local_ids_group_1, 2, 3).flatten()
         correct_volumes_group_2 = self.coarse.elements[i].faces.bridge_adjacencies(local_ids_group_2, 2, 3).flatten()
-        #
-        # if np.array_equal(self.direction, self.x) is True:
-        #     self.correct_volumes_x = np.append(self.correct_volumes_x, correct_volumes_group_1)
-        # elif np.array_equal(self.direction, self.y) is True:
-        #     self.correct_volumes_y = np.append(self.correct_volumes_y, correct_volumes_group_1)
-        # elif np.array_equal(self.direction, self.z) is True:
-        #     self.correct_volumes_z = np.append(self.correct_volumes_z, correct_volumes_group_1)
+
+        if np.array_equal(self.direction, self.x) is True:
+            self.coarse_face_x.append(correct_volumes_group_1)
+
+        elif np.array_equal(self.direction, self.y) is True:
+            self.coarse_face_y.append(correct_volumes_group_1)
+
+        elif np.array_equal(self.direction, self.z) is True:
+            self.coarse_face_z.append(correct_volumes_group_1)
 
         return correct_volumes_group_1, correct_volumes_group_2
 

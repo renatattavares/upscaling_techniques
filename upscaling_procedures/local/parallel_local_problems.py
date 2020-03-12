@@ -36,15 +36,10 @@ class ParallelLocalProblems(LocalProblems):
         self.check_parallel_direction()
         self.get_mesh_informations(coarse_config())
 
-        self.pressure_x = np.array([])
-        self.pressure_y = np.array([])
-        self.pressure_z = np.array([])
-
+        # Solve local problems in parallel
         self.distribute_data()
         self.create_processes()
 
-        # Solve local problems
-        #self.solve_local_problems()
     def solve_local_problems(self, coarse_volume):
 
         p = []
