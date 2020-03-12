@@ -6,10 +6,10 @@ import numpy as np
 from upscaling_procedures.local.local_problems import LocalProblems
 from upscaling_procedures.local.local_upscaling import LocalUpscaling
 
-class ParallelLocalUpscaling(LocalUpscaling):
+class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling):
 
     def __init__(self, mesh_file = None, dataset = None):
-        super().__init__(mesh_file, dataset)
+
 
         if mesh_file is None:
             lp = LocalProblems(mesh_file = None, dataset = dataset)

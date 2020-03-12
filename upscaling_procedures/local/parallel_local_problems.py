@@ -3,7 +3,7 @@ Module for treatment of local problems to apply local upscaling technique in str
 """
 import time
 import numpy as np
-from multiprocessing import Process, Queue
+import multiprocessing as mp
 from upscaling_procedures.local.local_problems import LocalProblems
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 
@@ -40,42 +40,61 @@ class ParallelLocalProblems(LocalProblems):
         self.pressure_y = np.array([])
         self.pressure_z = np.array([])
 
+        self.distribute_data()
         self.create_processes()
 
         # Solve local problems
         #self.solve_local_problems()
-    def solve_local_problems(self, coarse_volume, queue):
+    def solve_local_problems(self, coarse_volume):
+
+        p = []
 
         print('\nSolving local problem {}'.format(coarse_volume))
         self.coarse_volume = coarse_volume
         general_transmissibility = self.assembly_local_problem()
-        p = []
-
         for j in self.direction_string:
             transmissibility, source = self.set_boundary_conditions(j, general_transmissibility)
             pressure = self.solver(transmissibility, source)
             p.append(pressure)
 
+        return p
+
+    def solve_local_problems_parallel(self, coarse_volumes, queue):
+
+        for cv in coarse_volumes:
+            p = self.solve_local_problems(cv)
+
         queue.put(p)
+
+    def distribute_data(self):
+
+        core_number = mp.cpu_count() # Cores in the computer
+        number_problems_in_process = int(self.number_coarse_volumes/core_number) # Average number of local problems to be solved by one process
+        rest = self.number_coarse_volumes % core_number
+        distribution = []
+        coarse_volumes = np.arange(self.number_coarse_volumes)
+
+        for i in range(core_number):
+            if i is core_number-1:
+                distribution.append(coarse_volumes[number_problems_in_process*i:number_problems_in_process*(i+1)+rest])
+            else:
+                distribution.append(coarse_volumes[number_problems_in_process*i:number_problems_in_process*(i+1)])
+
+        self.distribution = distribution
 
     def create_processes(self):
 
-        process_number = len(self.mesh.coarse.elements)
+        pressures = []
+        process_number = len(self.distribution)
 
-        #Processes' arguments
-        queues = [Queue() for i in range(process_number)]
-        coarse_volumes = np.arange(process_number)
-
-        # Create and initialize processes
-        processes = [Process(target = self.solve_local_problems, args = (i, q,)) for i, q in zip(coarse_volumes, queues)]
+        queues = [mp.Queue() for i in range(process_number)]
+        processes = [mp.Process(target = self.solve_local_problems_parallel, args = (i,q,)) for i, q in zip(self.distribution, queues)]
 
         for p in processes:
             p.start()
 
-        pressures = []
-
         for p, q in zip(processes, queues):
-            p.join()
             pressures.append(q.get())
+            p.join()
 
         self.pressures = pressures
