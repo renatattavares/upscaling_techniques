@@ -41,19 +41,20 @@ class LocalUpscaling(LocalProblems):
                     center_distance_walls = self.center_distance_walls_z[i]
 
                 global_wall = self.coarse.elements[i].volumes.global_id[wall]
-                global_adj = self.identify_adjacent_volumes_to_wall(i, wall)
+                local_adj = self.identify_adjacent_volumes_to_wall(i, wall)
+                global_adj = self.coarse.elements[i].volumes.global_id[local_adj]
                 center_wall = self.coarse.elements[i].volumes.center[wall]
-                center_adj = self.coarse.elements[i].volumes.center[adjacent_volumes]
-                pressure_wall = pressures[global_wall]
-                pressure_adj = pressure[global_adj]
-                permeability_wall = self.get_absolute_permeabilities(direction, global_wall)
-                permeability_adj = self.get_absolute_permeabilities(direction, global_adj)
+                center_adj = self.coarse.elements[i].volumes.center[local_adj]
+                self.pressure_wall = pressures[global_wall]
+                self.pressure_adj = pressures[global_adj]
+                self.permeability_wall = self.get_absolute_permeabilities(direction, global_wall)
+                self.permeability_adj = self.get_absolute_permeabilities(direction, global_adj)
 
-                flow_rate = (2*np.multiply(permeability_wall,permeability_adj)/(permeability_wall+permeability_adj))*(pressure_wall-pressure_adj)/np.linalg.norm(center_wall - center_adj, axis = 1).sum()
-
-                effective_permeability = center_distance_walls[i]*flow_rate/(area*self.number_faces_coarse_face)
-
-                print(effective_permeability)
+                # flow_rate = (2*np.multiply(permeability_wall,permeability_adj)/(permeability_wall+permeability_adj))*(pressure_wall-pressure_adj)/np.linalg.norm(center_wall - center_adj, axis = 1).sum()
+                #
+                # effective_permeability = center_distance_walls[i]*flow_rate/(area*self.number_faces_coarse_face)
+                #
+                # print(effective_permeability)
 
     def upscale_porosity(self):
         """
@@ -68,12 +69,11 @@ class LocalUpscaling(LocalProblems):
 
     def identify_adjacent_volumes_to_wall(self, coarse_volume, wall):
 
-        adjacent_volumes = self.coarse.elements[coarse_volume].volumes.bridge_adjacencies(wall, 2, 3).flatten()
-        repeated_volumes = np.isin(adjacent_volumes, wall, invert = True).flatten()
+        adjacent_volumes = np.concatenate(self.coarse.elements[coarse_volume].volumes.bridge_adjacencies(wall, 2, 3))
+        repeated_volumes = np.isin(adjacent_volumes, wall, invert = True)
         adjacent_volumes = np.unique(adjacent_volumes[repeated_volumes].flatten())
-        global_id_adjacent_volumes = self.coarse.elements[coarse_volume].volumes.global_id[adjacent_volumes]
 
-        return global_id_adjacent_volumes
+        return adjacent_volumes
 
     def get_absolute_permeabilities(self, direction, global_ids):
 
