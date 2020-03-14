@@ -42,7 +42,6 @@ class LocalProblems(Assembly, BoundaryConditions):
         self.check_parallel_direction()
         self.get_mesh_informations(coarse_config())
 
-        # Solve local problems
         self.solve_local_problems()
 
     def preprocess_mesh(self):
@@ -61,9 +60,6 @@ class LocalProblems(Assembly, BoundaryConditions):
             self.mesh.porosity[:] = 1
 
         elif self.mode is 'integrated':
-            # self.permeability[:,0] = self.porosity + 5
-            # self.permeability[:,1] = self.porosity + 5
-            # self.permeability[:,2] = self.porosity + 5
             self.mesh.permeability[:] = self.permeability
             self.mesh.porosity[:] = self.porosity
 
@@ -92,21 +88,25 @@ class LocalProblems(Assembly, BoundaryConditions):
 
     def solve_local_problems(self):
 
-        self.pressure_x = np.array([])
-        self.pressure_y = np.array([])
-        self.pressure_z = np.array([])
+        self.pressure_x = []
+        self.pressure_y = []
+        self.pressure_z = []
 
         for i in range(self.number_coarse_volumes):
-            print('\nSolving local problem {}'.format(i))
+            print('\nSolving local problem {} '.format(i))
             self.coarse_volume = i
             general_transmissibility = self.assembly_local_problem()
+
             for j in self.direction_string:
+                print('{} direction'.format(j))
                 transmissibility, source = self.set_boundary_conditions(j, general_transmissibility)
                 pressure = self.solver(transmissibility, source)
 
                 if j == 'x':
-                    self.pressure_x = np.append(self.pressure_x, pressure)
+                    self.pressure_x.append(pressure)
                 elif j == 'y':
-                    self.pressure_y = np.append(self.pressure_y, pressure)
+                    self.pressure_y.append(pressure)
                 elif j == 'z':
-                    self.pressure_z = np.append(self.pressure_z, pressure)
+                    self.pressure_z.append(pressure)
+
+                print('Pressure stored')
