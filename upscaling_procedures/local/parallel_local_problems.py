@@ -44,7 +44,6 @@ class ParallelLocalProblems(LocalProblems):
 
         p = []
 
-        print('\nSolving local problem {}'.format(coarse_volume))
         self.coarse_volume = coarse_volume
         general_transmissibility = self.assembly_local_problem()
         for j in self.direction_string:
@@ -59,7 +58,7 @@ class ParallelLocalProblems(LocalProblems):
         for cv in coarse_volumes:
             p = self.solve_local_problems(cv)
 
-        queue.put(p)
+        queue.put(p) # Check storage, probably incomplete
 
     def distribute_data(self):
 
