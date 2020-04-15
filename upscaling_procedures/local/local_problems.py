@@ -44,6 +44,9 @@ class LocalProblems(Assembly, BoundaryConditions):
 
         self.solve_local_problems()
 
+    def err_handler(self, type, flag):
+        print("Floating point error {}, with flag {}".format(type, flag))
+
     def preprocess_mesh(self):
 
         print('\nPre-processing mesh with IMPRESS...')

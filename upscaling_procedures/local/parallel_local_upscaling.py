@@ -4,6 +4,7 @@ Module of local upscaling technique in structured tridimensional meshes using mu
 import time
 import numpy as np
 import multiprocessing as mp
+from imex_integration.read_dataset import read_dataset
 from upscaling_procedures.local.local_upscaling import LocalUpscaling
 from upscaling_procedures.local.parallel_local_problems import ParallelLocalProblems
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
@@ -22,6 +23,9 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling):
             print('\nMesh informations will be accessed from {} dataset'.format(dataset))
             self.mode = 'integrated'
             self.porosity, self.permeability = read_dataset(dataset)
+            self.permeability[:,0] = self.porosity
+            self.permeability[:,1] = self.porosity
+            self.permeability[:,2] = self.porosity
             self.mesh_file = 'generated_mesh.h5m'
 
         else:

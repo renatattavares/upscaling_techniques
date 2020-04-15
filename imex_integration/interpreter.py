@@ -5,7 +5,7 @@ class Interpreter:
     def read_mesh_data(lines):
 
         print('\n##### Read mesh data from dataset #####\n')
-        grid_token = '*GRID'
+        grid_token = '*GRID *CART'
         di_token = '*DI'
         dj_token = '*DJ'
         dk_token = '*DK'
@@ -13,20 +13,31 @@ class Interpreter:
         lines = lines
 
         tokens = [grid_token, di_token, dj_token, dk_token]
-        words = []
+        grid_info = []
+        info = []
+        start = False
 
-        i = 0
+        for line in lines:
+            if grid_token in line:
+                start = True
+            if start is True:
+                for token in tokens:
+                    if token in line:
+                        grid_info.append(line.split('**')[0])
+            if dk_token in line:
+                break
 
-        for token in tokens:
-            for line in lines:
-                if line.find(token) is 0:
-                    correct_line = line
+        for line in grid_info:
+            for letter in line:
+                if letter.isdigit() is True:
+                    pos = line.index(letter)
+                    info.append(line[pos:].strip())
                     break
-            words.append(correct_line.split(" "))
-            i =+ 1
 
-        number_elements_x, number_elements_y, number_elements_z = int(words[0][2]), int(words[0][3]), int(words[0][4])
-        lenght_elements_x, lenght_elements_y, lenght_elements_z = int(words[1][2]), int(words[2][2]), int(words[3][2])
+        number_elements_x, number_elements_y, number_elements_z = info[0].split(' ')
+        lenght_elements_x = int(info[1])
+        lenght_elements_y = int(info[2])
+        lenght_elements_z = int(info[3])
 
         number_elements = np.array([number_elements_x, number_elements_y, number_elements_z])
         length_elements = np.array([lenght_elements_x, lenght_elements_y, lenght_elements_z])
@@ -48,7 +59,7 @@ class Interpreter:
         i = 0
 
         for line in lines:
-            if line.find(porosity_token) is 0:
+            if line.find(porosity_token) == 0:
                 porosity_data = lines[(i+1):int(i+1+porosity_lines)]
                 break
             i += 1
@@ -78,7 +89,7 @@ class Interpreter:
             print(token)
             i = 0
             for line in lines:
-                if line.find(token) is 0:
+                if line.find(token) == 0:
                     permeability_data.append(lines[(i+1):int(i+1+permeability_lines)])
                     break
                 i += 1
