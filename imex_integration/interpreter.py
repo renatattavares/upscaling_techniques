@@ -79,42 +79,59 @@ class Interpreter:
         permeability_y_token = '*PERMJ'
         permeability_z_token = '*PERMK'
         permeability_data = []
-        permeability_lines = int(1122000/5)
         lines = lines
-        i = 0
 
-        tokens = [permeability_x_token, permeability_y_token, permeability_z_token]
+        found = False
 
-        for token in tokens:
-            print(token)
-            i = 0
-            for line in lines:
-                if line.find(token) == 0:
-                    permeability_data.append(lines[(i+1):int(i+1+permeability_lines)])
-                    break
-                i += 1
+        for line in lines:
+            if permeability_x_token in line:
+                indexx = lines.index(line)
 
-        permi_array = np.zeros((224400,5))
-        permj_array = np.zeros((224400,5))
-        permk_array = np.zeros((224400,5))
+            if permeability_y_token in line:
+                indexy = lines.index(line)
 
-        permi = permeability_data[0]
-        permj = permeability_data[1]
-        permk = permeability_data[2]
+            if permeability_z_token in line:
+                indexz = lines.index(line)
 
-        for i in range(224400):
-            permi_array[i] = np.fromstring(permi[i], sep = " ")
+            if '*MODEL *OILWATER' in line:
+                end = lines.index(line)
 
-        for i in range(224400):
-            permj_array[i] = np.fromstring(permj[i], sep = " ")
+        permi = lines[indexx+1:indexy-1]
+        permj = lines[indexy+1:indexz-1]
+        permk = lines[indexz+1:end-1]
 
-        for i in range(224400):
-            permk_array[i] = np.fromstring(permk[i], sep = " ")
+        flat_perm = []
+
+        for line in permi:
+            l = line.split()
+            if l != '\n':
+                for value in l:
+                    flat_perm.append(float(value))
+
+        permi_array = np.array(flat_perm, dtype = 'float')
+        flat_perm = []
+
+        for line in permj:
+            l = line.split()
+            if l != '\n':
+                for value in l:
+                    flat_perm.append(float(value))
+
+        permj_array = np.array(flat_perm, dtype = 'float')
+        flat_perm = []
+
+        for line in permk:
+            l = line.split()
+            if l != '\n':
+                for value in l:
+                    flat_perm.append(float(value))
+
+        permk_array = np.array(flat_perm, dtype = 'float')
 
         permeability = np.zeros((1122000,3))
 
-        permeability[:,0] = permi_array.flatten()
-        permeability[:,1] = permj_array.flatten()
-        permeability[:,2] = permk_array.flatten()
+        permeability[:,0] = permi_array
+        permeability[:,1] = permj_array
+        permeability[:,2] = permk_array
 
         return permeability

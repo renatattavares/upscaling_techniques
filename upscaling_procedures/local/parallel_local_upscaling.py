@@ -23,9 +23,6 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling):
             print('\nMesh informations will be accessed from {} dataset'.format(dataset))
             self.mode = 'integrated'
             self.porosity, self.permeability = read_dataset(dataset)
-            self.permeability[:,0] = self.porosity
-            self.permeability[:,1] = self.porosity
-            self.permeability[:,2] = self.porosity
             self.mesh_file = 'generated_mesh.h5m'
 
         else:
@@ -52,6 +49,38 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling):
 
         final_time = time.time()
         print("\nThe upscaling lasted {0}s".format(final_time-initial_time))
+
+    def get_wall(self, coarse_volume, direction):
+
+        i = coarse_volume
+        wall = np.zeros((1, self.number_faces_coarse_face), dtype = int)
+
+        boundary_faces = self.coarse.elements[i].faces.boundary # Local IDs of boundary faces of a coarse volume
+        global_ids_faces = self.coarse.elements[i].faces.global_id[boundary_faces]
+        parallel_direction = self.mesh.parallel_direction[global_ids_faces]
+        index_faces_direction = np.isin(parallel_direction, direction)
+        index_faces_direction = np.where(index_faces_direction == True)[0]
+        correct_faces = boundary_faces[index_faces_direction]
+
+        # Separate faces in two groups
+        global_ids_correct_faces = self.coarse.elements[i].faces.global_id[correct_faces]
+        interface_coarse_face_id = self.coarse.iface_neighbors(i)[1]
+
+        for j in range(len(interface_coarse_face_id)):
+            interface_faces = self.coarse.interfaces_faces[int(interface_coarse_face_id[j])]
+            verify = np.any(np.isin(interface_faces, global_ids_correct_faces[0]))
+            if verify == True:
+                index = np.isin(interface_faces, global_ids_correct_faces)
+                group_1 = interface_faces[index]
+                break
+
+        global_ids_faces = self.coarse.elements[i].faces.global_id[:]
+        index_group_1 = np.isin(global_ids_faces, group_1)
+        local_ids_group_1 = np.where(index_group_1 == True)[0]
+
+        wall = self.coarse.elements[i].faces.bridge_adjacencies(local_ids_group_1, 2, 3).flatten()
+
+        return wall
 
     def upscale_permeability(self, coarse_volume, pressure):
 
@@ -90,38 +119,9 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling):
 
         return effective_permeability
 
-    def get_wall(self, coarse_volume, direction):
-
-        i = coarse_volume
-        wall = np.zeros((1, self.number_faces_coarse_face), dtype = int)
-
-        boundary_faces = self.coarse.elements[i].faces.boundary # Local IDs of boundary faces of a coarse volume
-        global_ids_faces = self.coarse.elements[i].faces.global_id[boundary_faces]
-        parallel_direction = self.mesh.parallel_direction[global_ids_faces]
-        index_faces_direction = np.isin(parallel_direction, direction)
-        index_faces_direction = np.where(index_faces_direction == True)[0]
-        correct_faces = boundary_faces[index_faces_direction]
-
-        # Separate faces in two groups
-        global_ids_correct_faces = self.coarse.elements[i].faces.global_id[correct_faces]
-        interface_coarse_face_id = self.coarse.iface_neighbors(i)[1]
-
-        for j in range(len(interface_coarse_face_id)):
-            interface_faces = self.coarse.interfaces_faces[int(interface_coarse_face_id[j])]
-            verify = np.any(np.isin(interface_faces, global_ids_correct_faces[0]))
-            if verify == True:
-                index = np.isin(interface_faces, global_ids_correct_faces)
-                group_1 = interface_faces[index]
-                break
-
-        global_ids_faces = self.coarse.elements[i].faces.global_id[:]
-        index_group_1 = np.isin(global_ids_faces, group_1)
-        local_ids_group_1 = np.where(index_group_1 == True)[0]
-
-        wall = self.coarse.elements[i].faces.bridge_adjacencies(local_ids_group_1, 2, 3).flatten()
-
-        return wall
-
+    def upscale_porosity(self):
+        pass
+        
     def upscale_permeability_parallel(self, coarse_volumes, queue):
 
         ep = []
