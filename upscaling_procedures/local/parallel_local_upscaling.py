@@ -121,7 +121,7 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling):
 
     def upscale_porosity(self):
         pass
-        
+
     def upscale_permeability_parallel(self, coarse_volumes, queue):
 
         ep = []
@@ -149,3 +149,19 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling):
             p.join()
 
         self.effective_permeability = effective_permeabilities
+
+    def print_results(self):
+
+        temp_dist = np.array([], dtype = int)
+        temp_perm = np.array([])
+
+        for i in self.distribution:
+            temp = np.array([(result) for result in i])
+            temp_dist = np.append(temp_dist, temp)
+
+        for i in self.effective_permeability:
+            temp = np.array([(result[0]) for result in i])
+            temp_perm = np.append(temp_perm, temp)
+
+        for problem, perm in zip(temp_dist, temp_perm):
+            self.coarse.elements[problem].kefx[:] = perm 

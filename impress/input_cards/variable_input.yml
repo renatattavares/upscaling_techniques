@@ -1,4 +1,4 @@
-# Input file for variable settings
+   # Input file for variable settings
 
 # Inform us the name of the variable you want to create, its data size, format and the level of mesh in which the variable must be stored (pay attetion to the identation!):
 
@@ -60,4 +60,4 @@ kefx:
   data size: 1
   data type: float
   sparse: False
-  level: 0
+  level: 1
