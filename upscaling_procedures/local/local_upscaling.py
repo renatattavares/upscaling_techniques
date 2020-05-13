@@ -67,14 +67,6 @@ class LocalUpscaling(LocalProblems):
             volumes = np.ones(len(porosity))
             effective_porosity = (np.multiply(porosity*volumes).sum())/volumes.sum()
 
-    def identify_adjacent_volumes_to_wall(self, coarse_volume, wall):
-
-        adjacent_volumes = np.concatenate(self.coarse.elements[coarse_volume].volumes.bridge_adjacencies(wall, 2, 3))
-        repeated_volumes = np.isin(adjacent_volumes, wall, invert = True)
-        adjacent_volumes = np.unique(adjacent_volumes[repeated_volumes].flatten())
-
-        return adjacent_volumes
-
     def get_absolute_permeabilities(self, direction, global_ids):
 
         if direction == 'x':
@@ -88,16 +80,3 @@ class LocalUpscaling(LocalProblems):
             permeability = permeability[:,2]
 
         return permeability
-
-    def center_distance_walls(self):
-
-        self.center_distance_walls_x = np.array([])
-        self.center_distance_walls_y = np.array([])
-        self.center_distance_walls_z = np.array([])
-
-        for i in range(self.number_coarse_volumes):
-            min_coord = self.coarse.elements[i].volumes.center[:].min(axis = 0)
-            max_coord = self.coarse.elements[i].volumes.center[:].max(axis = 0)
-            self.center_distance_walls_x = np.append(self.center_distance_walls_x, (max_coord[0] - min_coord[0]))
-            self.center_distance_walls_y = np.append(self.center_distance_walls_x, (max_coord[1] - min_coord[1]))
-            self.center_distance_walls_z = np.append(self.center_distance_walls_x, (max_coord[2] - min_coord[2]))

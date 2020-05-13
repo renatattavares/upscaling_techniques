@@ -41,11 +41,7 @@ class LocalProblems(Assembly, BoundaryConditions):
         self.set_coordinate_system()
         self.check_parallel_direction()
         self.get_mesh_informations(coarse_config())
-
         self.solve_local_problems()
-
-    def err_handler(self, type, flag):
-        print("Floating point error {}, with flag {}".format(type, flag))
 
     def preprocess_mesh(self):
 
