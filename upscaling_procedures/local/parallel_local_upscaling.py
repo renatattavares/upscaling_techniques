@@ -22,8 +22,8 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling):
         if mesh_file is None:
             print('\nMesh informations will be accessed from {} dataset'.format(dataset))
             self.mode = 'integrated'
-            self.porosity, self.permeability = read_dataset(dataset)
-            self.mesh_file = 'generated_mesh.h5m'
+            self.mesh_file = 'mesh/generated_mesh.h5m'
+            self.porosity, self.permeability = read_dataset(dataset, self.mesh_file)
 
         else:
             print('\nMesh informations will be set automatically')
@@ -164,4 +164,4 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling):
             temp_perm = np.append(temp_perm, temp)
 
         for problem, perm in zip(temp_dist, temp_perm):
-            self.coarse.elements[problem].kefx[:] = perm 
+            self.coarse.elements[problem].kefx[:] = perm

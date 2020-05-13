@@ -34,12 +34,14 @@ class Interpreter:
                     info.append(line[pos:].strip())
                     break
 
-        number_elements_x, number_elements_y, number_elements_z = info[0].split(' ')
+        #number_elements_x, number_elements_y, number_elements_z = info[0].split(' ')
+        number_elements = [int (i) for i in info[0].split(' ')]
         lenght_elements_x = int(info[1])
         lenght_elements_y = int(info[2])
         lenght_elements_z = int(info[3])
 
-        number_elements = np.array([number_elements_x, number_elements_y, number_elements_z])
+        #number_elements = np.array([number_elements_x, number_elements_y, number_elements_z])
+        number_elements = np.array(number_elements)
         length_elements = np.array([lenght_elements_x, lenght_elements_y, lenght_elements_z])
 
         for i,j in zip(directions, number_elements):
