@@ -23,7 +23,7 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling, ParallelFeat
             print('\nMesh informations will be accessed from {} dataset'.format(dataset))
             self.mode = 'integrated'
             self.mesh_file = 'mesh/generated_mesh.h5m'
-            self.porosity, self.permeability = read_dataset(dataset, self.mesh_file)
+            self.porosity, self.permeability = read_dataset(dataset)
 
         else:
             print('\nMesh informations will be set automatically')

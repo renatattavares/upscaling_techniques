@@ -3,20 +3,37 @@ Module to rewrite specific keywords from IMEX data set after collecting upscalin
 """
 import numpy as np
 
-def __init__(self, original_dataset, new_dataset):
+class DatasetWriter:
 
-    porosity_token = '*POR'
-    permeability_token = '*PERM'
-    well_token = '*WELL'
+    def __init__(self, original_dataset):
 
-    with open(original_dataset, 'r') as dataset:
-        original_dataset = dataset.readlines()
+        porosity_token = '*POR'
+        permeability_token = '*PERM'
+        well_token = '*WELL'
 
-def write_effective_porosity(self):
-    pass
+        with open(original_dataset, 'r') as old:
+            self.original_dataset = old.readlines()
 
-def write_effective_permeability(self):
-    pass
+        self.identify_heading()
 
-def well_settings(self):
-    pass
+        with open('coarse_model.dat', 'w') as new:
+            new.writelines(self.heading)
+
+    def identify_heading(self):
+
+        heading_token = 'Reservoir Description Section'
+
+        for line in self.original_dataset:
+            if heading_token in line:
+                index = self.original_dataset.index(line)
+
+        self.heading = self.original_dataset[:index]
+        separator = self.original_dataset[index-1]
+        self.heading.append(heading_token + '\n')
+        self.heading.append(separator)
+
+    def effective_porosity(self):
+        pass
+
+    def effective_permeability(self):
+        pass

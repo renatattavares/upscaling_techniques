@@ -1,0 +1,57 @@
+******************************************************************************
+** spe66599.dat:           3-D HETEROGENEOUS EXAMPLE                        **
+******************************************************************************
+**************************************************************************************
+**                                                                                  **
+**                                                                                  **
+** FILE:    SUPER.DAT - Porosidade variavel                                         **
+**                                                                                  **
+** MODEL: 60x220x85                 SPE 10                3-D HETEROGENEOUS EXAMPLE **
+**                                                                                  **
+**************************************************************************************
+**                                                                                  **
+** Tenth SPE Comparative Solution Project: A Comparison of Upscaling Techniques     **
+** M.A.Christie, SPE, Heriot-Watt University, and M.J. Blunt, SPE, Imperial College **
+** Symposium on Reservoir Simulation, 2001 (SPE 66599). This is 60 x 220 x 85       **
+** heterogeneous Cartesian grid problem with a water injector located at (30,110)   **
+** and 4 producers (This script was based in MXSPE009.DAT file).                    **
+**                                                                                  **
+**************************************************************************************
+** CONTACT: CMG, (403)531-1300; 282-6495 (fax);support@cmgl.ca (Internet)           **
+**************************************************************************************
+
+RESULTS SIMULATOR IMEX
+********************************************************************************
+** I/O Control Section                                                        **
+********************************************************************************
+**FILENAME *OUTPUT 'super2.out'
+**FILENAME *INDEX-OUT 'super2.irf'
+**FILENAME *MAIN-RESULTS-OUT 'super2.mrf'
+**FILENAME *INDEX-IN 'super.irf'
+**FILENAME *MAIN-RESULTS-IN 'super.mrf'
+
+**RESTART
+
+*TITLE1
+'Tenth SPE Comparative Solution Project'
+*TITLE2
+'A Comparison of Upscaling Techniques'
+*TITLE3
+'M.A. Christie, M.J. Blunt, SPE Res Sim Symp, Houston, Texas, 2001'
+
+*NOLIST
+*INUNIT *FIELD                  ** Field units are used for both input and output.
+*WPRN *WELL 0
+*WPRN *GRID 0
+*OUTPRN *GRID *PRES *SO *SW
+*OUTPRN *TABLES *NONE
+*WSRF *GRID *TIME
+*WSRF *WELL *TIME
+*OUTSRF *GRID *SO *SW *PRES
+
+** RESTART FILE
+*WRST 10
+
+********************************************************************************
+Reservoir Description Section
+********************************************************************************
