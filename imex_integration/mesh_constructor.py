@@ -2,7 +2,8 @@ import numpy as np
 from pymoab import core, types, rng
 
 class MeshConstructor:
-    def __init__(self, number_elements, length_elements):
+
+    def __init__(self, number_elements, length_elements, mesh_file):
         print('\n##### Generating mesh file #####')
         self.mesh_file = mesh_file
         elements = number_elements
@@ -60,4 +61,5 @@ class MeshConstructor:
 
         # Escrevendo malha em arquivo vtk para visualização no visit. Para utilizar a função write_file é necessário ter uma entidade iterável. Portanto, é necessária a criação de um range
         mesh_file = rng.Range(self.meshset)
-        self.mbcore.write_file('mesh/generated_mesh.h5m')
+        self.mbcore.write_file(self.mesh_file)
+        print('\n##### Mesh file created #####')

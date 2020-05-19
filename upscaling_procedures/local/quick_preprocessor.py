@@ -3,7 +3,7 @@ import numpy as np
 
 class QuickPreprocessor:
 
-    def get_mesh_informations(self, coarse_config, mesh_info_file = 'mesh_info.yml'):
+    def get_mesh_informations(self, coarse_config):
         """
         Access coarsening informations given to IMPRESS.
         """
@@ -12,12 +12,6 @@ class QuickPreprocessor:
         self.ny = tree['ny']
         self.nz = tree['nz']
 
-        with open(mesh_info_file, 'r') as file:
-            data = yaml.safe_load(file)
-
-        self.number_elements_x_direction = data['x']
-        self.number_elements_y_direction = data['y']
-        self.number_elements_z_direction = data['z']
         self.number_coarse_volumes = len(self.coarse.elements) # Number of volumes from the coarse mesh
         self.number_volumes_local_problem = int(len(self.mesh.volumes)/(self.nx*self.ny*self.nz)) # Number of fine scale volumes inside a coarse volume
         self.wall_x = []
