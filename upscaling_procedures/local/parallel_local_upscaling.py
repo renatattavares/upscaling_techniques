@@ -8,6 +8,7 @@ import multiprocessing as mp
 from imex_integration.read_dataset import read_dataset
 from imex_integration.mesh_constructor import MeshConstructor
 from upscaling_procedures.local.local_upscaling import LocalUpscaling
+from impress.preprocessor.meshHandle.finescaleMesh import FineScaleMesh
 from upscaling_procedures.local.parallel_local_problems import ParallelLocalProblems
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 
@@ -186,3 +187,5 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling):
         self.coarse_length_elements = (fine_number_elements/self.coarse_number_elements)*fine_length_elements
 
         generator = MeshConstructor(self.coarse_number_elements, self.coarse_length_elements, mesh_file)
+
+        self.coarse_model = FineScaleMesh(mesh_file)

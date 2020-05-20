@@ -55,9 +55,25 @@ parallel_direction:
   sparse: False
   level: 0
 
+# Print coarse model
+
 kefx:
   type: volumes
   data size: 1
   data type: float
   sparse: False
-  level: 1
+  level: 0
+
+kefy:
+  type: volumes
+  data size: 1
+  data type: float
+  sparse: False
+  level: 0
+
+kefz:
+  type: volumes
+  data size: 1
+  data type: float
+  sparse: False
+  level: 0
