@@ -48,24 +48,26 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling):
             self.number_elements_x_direction = data['x']
             self.number_elements_y_direction = data['y']
             self.number_elements_z_direction = data['z']
+            self.number_elements = np.array([self.number_elements_x_direction, self.number_elements_y_direction, self.number_elements_z_direction])
+            self.length_elements = np.array([1,1,1])
             self.length_elements_x_direction, self.length_elements_y_direction, self.length_elements_z_direction = 1, 1, 1
 
         # Read boundary condition chosen
         self.boundary_condition_type = 1
 
         # Preprocessing mesh with IMPRESS
-        # self.preprocess_mesh()
+        self.preprocess_mesh()
         #
-        # # Setting variables and informations
-        # self.set_simulation_variables()
-        # self.set_coordinate_system()
-        # self.check_parallel_direction()
-        # self.get_mesh_informations(coarse_config())
-        # self.center_distance_walls()
+        # Setting variables and informations
+        self.set_simulation_variables()
+        self.set_coordinate_system()
+        self.check_parallel_direction()
+        self.get_mesh_informations(coarse_config())
+        self.center_distance_walls()
 
         # Upscale in parallel
-        #self.distribute_data()
-        #self.create_processes()
+        self.distribute_data()
+        self.create_processes()
 
         final_time = time.time()
         print("\nThe upscaling lasted {0}s".format(final_time-initial_time))
@@ -185,7 +187,13 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling):
             self.coarse_number_elements = np.append(self.coarse_number_elements,coarsening[key])
 
         self.coarse_length_elements = (fine_number_elements/self.coarse_number_elements)*fine_length_elements
-
         generator = MeshConstructor(self.coarse_number_elements, self.coarse_length_elements, mesh_file)
+        coarse_model = FineScaleMesh(mesh_file)
 
-        self.coarse_model = FineScaleMesh(mesh_file)
+        for a, b in zip(self.effective_permeability, self.distribution):
+            for c, d in zip(a, b):
+                coarse_model.kefx[int(d)] = c[0]
+                coarse_model.kefy[int(d)] = c[1]
+                coarse_model.kefz[int(d)] = c[2]
+
+        coarse_model.core.print()
