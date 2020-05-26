@@ -6,13 +6,12 @@ import yaml
 import numpy as np
 import multiprocessing as mp
 from imex_integration.read_dataset import read_dataset
-from imex_integration.mesh_constructor import MeshConstructor
+from upscaling_procedures.local.visualize import Visualize
 from upscaling_procedures.local.local_upscaling import LocalUpscaling
-from impress.preprocessor.meshHandle.finescaleMesh import FineScaleMesh
 from upscaling_procedures.local.parallel_local_problems import ParallelLocalProblems
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 
-class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling):
+class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling, Visualize):
 
     def __init__(self, mesh_file = None, dataset = None):
 
@@ -171,29 +170,3 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling):
             p.join()
 
         self.effective_permeability = effective_permeabilities
-
-    def print_results(self, mesh_file = 'mesh/coarse_model.h5m'):
-
-        fine_number_elements = self.number_elements
-        fine_length_elements = self.length_elements
-        self.coarse_number_elements = np.array([], dtype = int)
-
-        with open('impress/input_cards/coarsening.yml', 'r') as coarsening:
-            new_mesh_data = yaml.safe_load(coarsening)
-
-        coarsening = new_mesh_data['Simple']
-
-        for key in coarsening.keys():
-            self.coarse_number_elements = np.append(self.coarse_number_elements,coarsening[key])
-
-        self.coarse_length_elements = (fine_number_elements/self.coarse_number_elements)*fine_length_elements
-        generator = MeshConstructor(self.coarse_number_elements, self.coarse_length_elements, mesh_file)
-        coarse_model = FineScaleMesh(mesh_file)
-
-        for a, b in zip(self.effective_permeability, self.distribution):
-            for c, d in zip(a, b):
-                coarse_model.kefx[int(d)] = c[0]
-                coarse_model.kefy[int(d)] = c[1]
-                coarse_model.kefz[int(d)] = c[2]
-
-        coarse_model.core.print()
