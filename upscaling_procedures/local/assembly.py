@@ -26,8 +26,7 @@ class Assembly:
             multiplication = np.multiply(permeability_direction[:,0], permeability_direction[:,1])
             sum = permeability_direction[:,0] + permeability_direction[:,1]
             equivalent_permeability[correct_faces] = 2*multiplication/sum
-            global_faces_ids = self.coarse.elements[coarse_volume].faces.global_id[correct_faces]
-
+            
         return equivalent_permeability
 
     def assembly_local_problem(self):
