@@ -14,8 +14,8 @@ Scheme: 'simple'
 # Simple Technique Attributes
 Simple:
 # Define the number of coarse volumes in the x,y and z directions
-    nx: 10
-    ny: 10
+    nx: 5
+    ny: 5
     nz: 5
 
 Smart:
