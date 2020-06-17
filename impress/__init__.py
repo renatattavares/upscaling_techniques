@@ -1,2 +1,2 @@
-from .preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS
-from .preprocessor.meshHandle.finescaleMesh import FineScaleMesh
+from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS
+from impress.preprocessor.meshHandle.finescaleMesh import FineScaleMesh

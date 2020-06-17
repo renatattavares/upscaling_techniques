@@ -264,7 +264,7 @@ class CoreMoab:
                 range_merged.merge(arg)
         return range_merged
 
-    def print(self, file=None, extension=".h5m", case = None,  config_input="impress/input_cards/print_settings.yml"):
+    def print(self, file=None, extension=".h5m", case = None,  config_input = "impress/input_cards/print_settings.yml"):
         if case is None:
             case = ''
         text =  file
