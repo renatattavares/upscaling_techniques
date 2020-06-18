@@ -8,7 +8,7 @@ from scipy.sparse.linalg import spsolve
 from upscaling_procedures.local.local_problems import LocalProblems
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 
-class Serie(LocalProblems):
+class Parallel(LocalProblems):
 
     def __init__(self, mesh_file = None, dataset = None):
 
@@ -17,11 +17,12 @@ class Serie(LocalProblems):
         # Preprocessing mesh with IMPRESS
         self.mesh_file = mesh_file
         self.preprocess_mesh()
-        self.mesh.permeability[np.array([0,1,2,3,4,5])] = np.array([7,7,7])
-        self.mesh.permeability[np.array([6,7,8,9,10,11])] = np.array([3,3,3])
+
+        self.mesh.permeability[np.array([2,3,6,7,10,11,14,15])] = np.array([3,3,3])
+        self.mesh.permeability[np.array([0,1,4,5,8,9,12,13])] = np.array([7,7,7])
         self.number_coarse_volumes = 1
         self.coarse_volume = 0
-        self.number_volumes_local_problem = 12
+        self.number_volumes_local_problem = 16
         self.direction_string = np.array(['z'])
         self.x = np.array([1,0,0])
         self.y = np.array([0,1,0])
@@ -31,7 +32,7 @@ class Serie(LocalProblems):
             'y': self.y,
             'z': self.z
             }
-        self.number_faces_coarse_face = 2
+        self.number_faces_coarse_face = 4
 
         self.solve_local_problems()
         self.center_distance_walls()
@@ -85,7 +86,6 @@ class Serie(LocalProblems):
             multiplication = np.multiply(permeability_direction[:,0], permeability_direction[:,1])
             sum = permeability_direction[:,0] + permeability_direction[:,1]
             equivalent_permeability[correct_faces] = 2*multiplication/sum
-            print(equivalent_permeability[correct_faces])
 
         return equivalent_permeability
 
@@ -114,8 +114,8 @@ class Serie(LocalProblems):
                 print('Pressure stored')
 
     def fixed_constant_pressure(self, general_transmissibility):
-        volumes_group_1 = np.array([0,1])
-        volumes_group_2 = np.array([10,11])
+        volumes_group_1 = np.array([0,1,2,3])
+        volumes_group_2 = np.array([12,13,14,15])
 
         transmissibility = general_transmissibility
         transmissibility[volumes_group_1] = 0
@@ -146,9 +146,9 @@ class Serie(LocalProblems):
                     pressures = self.pressure_y[i]
                     center_distance_walls = self.center_distance_walls_y[i]
                 elif direction == 'z':
-                    local_wall = np.array([0,1])
+                    local_wall = np.array([0,1,2,3])
                     pressures = self.pressure_z[i]
-                    center_distance_walls = 5
+                    center_distance_walls = 3
 
                 global_wall = self.coarse.elements[i].volumes.global_id[local_wall]
                 local_adj = self.identify_adjacent_volumes_to_wall(i, local_wall)

@@ -6,21 +6,14 @@
 # data format must be a string
 # level must be an integer
 
-permx:
-  type: volumes
-  data size: 1
-  data type: float
-  sparse: False
-  level: 0
-
-permy:
-  type: volumes
-  data size: 1
-  data type: float
-  sparse: False
-  level: 0
-
 permz:
+  type: volumes
+  data size: 1
+  data type: float
+  sparse: False
+  level: 0
+
+pressure:
   type: volumes
   data size: 1
   data type: float
