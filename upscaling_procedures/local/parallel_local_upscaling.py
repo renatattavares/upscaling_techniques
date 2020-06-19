@@ -24,6 +24,7 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling, Visualize):
         if mesh_file is None:
             print('\nMesh informations will be accessed from {} dataset'.format(dataset))
             self.mode = 'integrated'
+<<<<<<< HEAD
             self.mesh_file = 'mesh/generated_mesh.h5m'
             self.porosity, self.permeability, self.number_elements, self.length_elements = read_dataset(dataset)
 
@@ -34,6 +35,10 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling, Visualize):
             self.length_elements_x_direction = self.length_elements[0]
             self.length_elements_y_direction = self.length_elements[1]
             self.length_elements_z_direction = self.length_elements[2]
+=======
+            self.mesh_file = 'mesh/dataset_mesh.h5m'
+            self.porosity, self.permeability = read_dataset(dataset)
+>>>>>>> write_dataset
 
         else:
             print('\nMesh informations will be set automatically')
