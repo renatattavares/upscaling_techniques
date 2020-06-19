@@ -14,9 +14,9 @@ Scheme: 'simple'
 # Simple Technique Attributes
 Simple:
 # Define the number of coarse volumes in the x,y and z directions
-    nx: 10
-    ny: 11
-    nz: 5
+    nx: 12
+    ny: 55
+    nz: 17
 
 Smart:
 # Define the path and the name of the conforming mesh
