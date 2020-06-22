@@ -164,6 +164,7 @@ class Parallel(LocalProblems):
 
                 effective_permeability = center_distance_walls*flow_rate/(area*self.number_faces_coarse_face)
 
+                print(flow_rate)
                 print(effective_permeability)
 
     def get_absolute_permeabilities(self, direction, global_ids):

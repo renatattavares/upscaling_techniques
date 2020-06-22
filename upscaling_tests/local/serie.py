@@ -85,7 +85,6 @@ class Serie(LocalProblems):
             multiplication = np.multiply(permeability_direction[:,0], permeability_direction[:,1])
             sum = permeability_direction[:,0] + permeability_direction[:,1]
             equivalent_permeability[correct_faces] = 2*multiplication/sum
-            print(equivalent_permeability[correct_faces])
 
         return equivalent_permeability
 
@@ -164,6 +163,7 @@ class Serie(LocalProblems):
 
                 effective_permeability = center_distance_walls*flow_rate/(area*self.number_faces_coarse_face)
 
+                print(flow_rate)
                 print(effective_permeability)
 
     def get_absolute_permeabilities(self, direction, global_ids):
