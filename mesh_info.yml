@@ -1,5 +1,11 @@
-# Mesh info
+# Mesh informations
 
-x: 1
-y: 5
-z: 10
+Elements:
+    x: 20
+    y: 20
+    z: 20
+
+Lenght:
+    x: 1
+    y: 1
+    z: 1

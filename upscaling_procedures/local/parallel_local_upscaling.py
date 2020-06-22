@@ -22,49 +22,21 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling, Visualize):
         print('\n##### Treatment of local problems #####')
 
         if mesh_file is None:
-            print('\nMesh informations will be accessed from {} dataset'.format(dataset))
             self.mode = 'integrated'
-<<<<<<< HEAD
-            self.mesh_file = 'mesh/generated_mesh.h5m'
-            self.porosity, self.permeability, self.number_elements, self.length_elements = read_dataset(dataset)
-
-            self.number_elements_x_direction = self.number_elements[0]
-            self.number_elements_y_direction = self.number_elements[1]
-            self.number_elements_z_direction = self.number_elements[2]
-
-            self.length_elements_x_direction = self.length_elements[0]
-            self.length_elements_y_direction = self.length_elements[1]
-            self.length_elements_z_direction = self.length_elements[2]
-=======
-            self.mesh_file = 'mesh/dataset_mesh.h5m'
-            self.porosity, self.permeability = read_dataset(dataset)
->>>>>>> write_dataset
 
         else:
-            print('\nMesh informations will be set automatically')
             self.mode = 'auto'
             self.mesh_file = mesh_file
 
-            mesh_info_file = 'mesh_info.yml'
-            with open(mesh_info_file, 'r') as file:
-                data = yaml.safe_load(file)
-
-            self.number_elements_x_direction = data['x']
-            self.number_elements_y_direction = data['y']
-            self.number_elements_z_direction = data['z']
-            self.number_elements = np.array([self.number_elements_x_direction, self.number_elements_y_direction, self.number_elements_z_direction])
-            self.length_elements = np.array([1,1,1])
-            self.length_elements_x_direction, self.length_elements_y_direction, self.length_elements_z_direction = 1, 1, 1
-
-        # Read boundary condition chosen
+        # Setting variables and informations
         self.boundary_condition_type = 1
+        self.set_coordinate_system()
+        self.set_simulation_variables()
 
         # Preprocessing mesh with IMPRESS
         self.preprocess_mesh()
-        #
-        # Setting variables and informations
-        self.set_simulation_variables()
-        self.set_coordinate_system()
+
+        # Preparing for upscaling
         self.check_parallel_direction()
         self.get_mesh_informations(coarse_config())
         self.center_distance_walls()
@@ -75,6 +47,37 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling, Visualize):
 
         final_time = time.time()
         print("\nThe upscaling lasted {0}s".format(final_time-initial_time))
+
+    def set_simulation_variables(self):
+
+        if self.mode is 'auto':
+            self.mesh.permeability[:] = np.array([1,1,1])
+            self.mesh.porosity[:] = 1
+
+            mesh_info_file = 'mesh_info.yml'
+
+            with open(mesh_info_file, 'r') as file:
+                data = yaml.safe_load(file)
+
+            self.number_elements_x_direction = data['Elements']['x']
+            self.number_elements_y_direction = data['Elements']['y']
+            self.number_elements_z_direction = data['Elements']['z']
+
+            self.length_elements_x_direction = data['Lenght']['x']
+            self.length_elements_y_direction = data['Lenght']['y']
+            self.length_elements_z_direction = data['Lenght']['z']
+
+        elif self.mode is 'integrated':
+            self.mesh_file = 'mesh/dataset_mesh.h5m'
+            self.porosity, self.permeability, self.number_elements, self.length_elements = read_dataset(dataset)
+
+            self.number_elements_x_direction = self.number_elements[0]
+            self.number_elements_y_direction = self.number_elements[1]
+            self.number_elements_z_direction = self.number_elements[2]
+
+            self.length_elements_x_direction = self.length_elements[0]
+            self.length_elements_y_direction = self.length_elements[1]
+            self.length_elements_z_direction = self.length_elements[2]
 
     def upscale_permeability(self, coarse_volume, pressure):
 

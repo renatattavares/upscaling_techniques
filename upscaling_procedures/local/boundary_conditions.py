@@ -20,6 +20,7 @@ class BoundaryConditions(QuickPreprocessor):
             }
 
         self.direction = self.directions_dictionary.get(direction) # Get the direction given
+
         if np.array_equal(self.direction, self.x) is True:
             self.perpendicular_direction_1 = self.y
             self.perpendicular_direction_2 = self.z
