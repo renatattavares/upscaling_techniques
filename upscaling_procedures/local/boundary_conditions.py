@@ -19,7 +19,7 @@ class BoundaryConditions(QuickPreprocessor):
             3: self.periodic_pressure        # Periodic pressure
             }
 
-        self.check_directions_and_coarse_face()
+        self.check_coarse_face()
 
         general_transmissibility = general_transmissibility
         transmissibility, source, correct_volumes_group_1 = self.boundary_conditions_dictionary.get(self.boundary_condition_type, "\nprint('Invalid boundary condition')")(general_transmissibility) # Execute the correct boundary condition function

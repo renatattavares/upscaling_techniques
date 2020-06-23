@@ -71,14 +71,6 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling, Visualize):
             self.mesh_file = 'mesh/dataset_mesh.h5m'
             self.porosity, self.permeability, self.number_elements, self.length_elements = read_dataset(dataset)
 
-            self.number_elements_x_direction = self.number_elements[0]
-            self.number_elements_y_direction = self.number_elements[1]
-            self.number_elements_z_direction = self.number_elements[2]
-
-            self.length_elements_x_direction = self.length_elements[0]
-            self.length_elements_y_direction = self.length_elements[1]
-            self.length_elements_z_direction = self.length_elements[2]
-
     def upscale_permeability(self, coarse_volume, pressure):
 
         area = 1

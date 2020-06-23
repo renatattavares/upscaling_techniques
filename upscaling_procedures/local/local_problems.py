@@ -40,7 +40,7 @@ class LocalProblems(MeshGeometry, Assembly, BoundaryConditions, Solver):
         self.get_mesh_informations(coarse_config())
 
         # Solve local problems
-        self.solve_local_problems()
+        #self.solve_local_problems()
 
     def preprocess_mesh(self):
 
@@ -78,22 +78,15 @@ class LocalProblems(MeshGeometry, Assembly, BoundaryConditions, Solver):
             with open(mesh_info_file, 'r') as file:
                 data = yaml.safe_load(file)
 
-            self.number_elements_x_direction = data['Elements']['x']
-            self.number_elements_y_direction = data['Elements']['y']
-            self.number_elements_z_direction = data['Elements']['z']
+            number_elements = data['Elements']
+            lenght_elements = data['Length']
+            self.number_elements = np.array([], dtype = int)
+            self.length_elements = np.array([], dtype = int)
 
-            self.length_elements_x_direction = data['Lenght']['x']
-            self.length_elements_y_direction = data['Lenght']['y']
-            self.length_elements_z_direction = data['Lenght']['z']
+            for number, lenght in zip(number_elements.values(), lenght_elements.values()):
+                self.number_elements = np.append(self.number_elements, number)
+                self.length_elements = np.append(self.length_elements, lenght)
 
         elif self.mode is 'integrated':
             self.mesh_file = 'mesh/dataset_mesh.h5m'
             self.porosity, self.permeability, self.number_elements, self.length_elements = read_dataset(dataset)
-
-            self.number_elements_x_direction = self.number_elements[0]
-            self.number_elements_y_direction = self.number_elements[1]
-            self.number_elements_z_direction = self.number_elements[2]
-
-            self.length_elements_x_direction = self.length_elements[0]
-            self.length_elements_y_direction = self.length_elements[1]
-            self.length_elements_z_direction = self.length_elements[2]

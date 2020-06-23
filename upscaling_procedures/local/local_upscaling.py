@@ -12,7 +12,8 @@ class LocalUpscaling(LocalProblems):
 
         super().__init__(mesh_file, dataset)
         self.center_distance_walls()
-        self.upscale_permeability()
+        self.areas()
+        #self.upscale_permeability()
 
         final_time = time.time()
         print("\nThe upscaling lasted {0}s".format(final_time-initial_time))

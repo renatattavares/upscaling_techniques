@@ -19,10 +19,11 @@ class QuickPreprocessor:
 
     def identify_top_bottom_volumes(self):
 
-        direction = self.directions_numbers.get(self.direction)
+        direction = self.directions_dictionary.get(self.direction)
+        direction_number = self.directions_numbers.get(self.direction)
 
-        correct_volumes_group_1 = np.zeros((1, self.number_faces_coarse_face), dtype = int)
-        correct_volumes_group_2 = np.zeros((1, self.number_faces_coarse_face), dtype = int)
+        correct_volumes_group_1 = np.zeros((1, self.number_faces_coarse_face[direction_number]), dtype = int)
+        correct_volumes_group_2 = np.zeros((1, self.number_faces_coarse_face[direction_number]), dtype = int)
 
         boundary_faces = self.coarse.elements[self.coarse_volume].faces.boundary # Local IDs of boundary faces of a coarse volume
         global_ids_faces = self.coarse.elements[self.coarse_volume].faces.global_id[boundary_faces]
@@ -92,16 +93,3 @@ class QuickPreprocessor:
         adjacent_volumes = np.unique(adjacent_volumes[repeated_volumes].flatten())
 
         return adjacent_volumes
-
-    def center_distance_walls(self):
-
-        self.center_distance_walls_x = np.array([])
-        self.center_distance_walls_y = np.array([])
-        self.center_distance_walls_z = np.array([])
-
-        for i in range(self.number_coarse_volumes):
-            min_coord = self.coarse.elements[i].volumes.center[:].min(axis = 0)
-            max_coord = self.coarse.elements[i].volumes.center[:].max(axis = 0)
-            self.center_distance_walls_x = np.append(self.center_distance_walls_x, (max_coord[0] - min_coord[0]))
-            self.center_distance_walls_y = np.append(self.center_distance_walls_x, (max_coord[1] - min_coord[1]))
-            self.center_distance_walls_z = np.append(self.center_distance_walls_x, (max_coord[2] - min_coord[2]))
