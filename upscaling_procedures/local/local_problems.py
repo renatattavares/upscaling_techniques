@@ -6,15 +6,15 @@ import copy
 import yaml
 #import xlsxwriter
 import numpy as np
-from scipy.sparse import lil_matrix
-from scipy.sparse.linalg import spsolve
+from upscaling_procedures.local.solver import Solver
 from imex_integration.read_dataset import read_dataset
 from upscaling_procedures.local.assembly import Assembly
+from upscaling_procedures.local.mesh_geometry import MeshGeometry
 from upscaling_procedures.local.boundary_conditions import BoundaryConditions
 from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as impress
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 
-class LocalProblems(Assembly, BoundaryConditions):
+class LocalProblems(MeshGeometry, Assembly, BoundaryConditions, Solver):
 
     def __init__(self, mesh_file = None, dataset = None):
 
@@ -61,6 +61,11 @@ class LocalProblems(Assembly, BoundaryConditions):
             'y': self.y,
             'z': self.z
             }
+        self.directions_numbers = {
+            'x': 0,
+            'y': 1,
+            'z': 2
+            }
 
     def set_simulation_variables(self):
 
@@ -92,38 +97,3 @@ class LocalProblems(Assembly, BoundaryConditions):
             self.length_elements_x_direction = self.length_elements[0]
             self.length_elements_y_direction = self.length_elements[1]
             self.length_elements_z_direction = self.length_elements[2]
-
-        
-    def solver(self, transmissibility, source):
-
-        i = self.coarse_volume
-        #print("Solving local problem {0}".format(i))
-        transmissibility = lil_matrix.tocsr(transmissibility)
-        source = lil_matrix.tocsr(source)
-
-        pressure = spsolve(transmissibility,source)
-
-        return pressure
-
-    def solve_local_problems(self):
-
-        self.pressure_x = []
-        self.pressure_y = []
-        self.pressure_z = []
-
-        for i in range(self.number_coarse_volumes):
-            print('\nSolving local problem {} '.format(i))
-            self.coarse_volume = i
-            general_transmissibility = self.assembly_local_problem()
-
-            for j in self.direction_string:
-                print('{} direction'.format(j))
-                transmissibility, source = self.set_boundary_conditions(j, general_transmissibility)
-                pressure = self.solver(transmissibility, source)
-
-                if j == 'x':
-                    self.pressure_x.append(pressure)
-                elif j == 'y':
-                    self.pressure_y.append(pressure)
-                elif j == 'z':
-                    self.pressure_z.append(pressure)

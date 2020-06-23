@@ -6,13 +6,13 @@ from upscaling_procedures.local.parallel_local_upscaling import ParallelLocalUps
 from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as impress
 
 ############### RUN LOCAL PROBLEMS ###############
-#lp = LocalProblems(mesh_file = 'mesh/20.h5m', dataset = None)
+lp = LocalProblems(mesh_file = 'mesh/20.h5m', dataset = None)
 #lp = ParallelLocalProblems(mesh_file = 'mesh/20.h5m', dataset = None)
 #lp = LocalProblems(mesh_file = None, dataset = 'imex_datasets/data_20_mesh.dat')
 
 ############### RUN LOCAL UPSCALING ###############
 #lu = LocalUpscaling(mesh_file = None, dataset = 'imex_datasets/data_20_mesh.dat')
-lu = LocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
+#lu = LocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
 
 ############### RUN PARALLEL LOCAL UPSCALING ###############
 #lu = ParallelLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)

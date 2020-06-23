@@ -8,7 +8,7 @@ class BoundaryConditions(QuickPreprocessor):
     def __init__(self, boundary_condition_type):
         self.boundary_condition_type = boundary_condition_type
 
-    def set_boundary_conditions(self, direction, general_transmissibility):
+    def set_boundary_conditions(self, general_transmissibility):
         """
         Indicates which function must be executed to set boundary conditions acording to the option informed by the user.
         """
@@ -19,27 +19,12 @@ class BoundaryConditions(QuickPreprocessor):
             3: self.periodic_pressure        # Periodic pressure
             }
 
-        self.direction = self.directions_dictionary.get(direction) # Get the direction given
-
-        if np.array_equal(self.direction, self.x) is True:
-            self.perpendicular_direction_1 = self.y
-            self.perpendicular_direction_2 = self.z
-            self.number_faces_coarse_face = int((self.number_elements_y_direction/self.ny)*(self.number_elements_z_direction/self.nz))
-
-        elif np.array_equal(self.direction, self.y) is True:
-            self.perpendicular_direction_1 = self.x
-            self.perpendicular_direction_2 = self.z
-            self.number_faces_coarse_face = int((self.number_elements_x_direction/self.nx)*(self.number_elements_z_direction/self.nz))
-
-        elif np.array_equal(self.direction, self.z) is True:
-            self.perpendicular_direction_1 = self.x
-            self.perpendicular_direction_2 = self.y
-            self.number_faces_coarse_face = int((self.number_elements_x_direction/self.ny)*(self.number_elements_y_direction/self.ny))
+        self.check_directions_and_coarse_face()
 
         general_transmissibility = general_transmissibility
-        transmissibility, source = self.boundary_conditions_dictionary.get(self.boundary_condition_type, "\nprint('Invalid boundary condition')")(general_transmissibility) # Execute the correct boundary condition function
+        transmissibility, source, correct_volumes_group_1 = self.boundary_conditions_dictionary.get(self.boundary_condition_type, "\nprint('Invalid boundary condition')")(general_transmissibility) # Execute the correct boundary condition function
 
-        return transmissibility, source
+        return transmissibility, source, correct_volumes_group_1
 
     def fixed_constant_pressure(self, general_transmissibility):
         """
@@ -60,7 +45,7 @@ class BoundaryConditions(QuickPreprocessor):
 
         #print('Fixed constant pressure boundary condition applied')
 
-        return transmissibility, source
+        return transmissibility, source, correct_volumes_group_1
 
     # Depending on the identify_side_volumes function
     def fixed_linear_pressure(self):

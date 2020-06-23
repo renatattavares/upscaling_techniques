@@ -4,10 +4,6 @@ from imex_integration.mesh_constructor import MeshConstructor
 from impress.preprocessor.meshHandle.finescaleMesh import FineScaleMesh
 
 class Visualize:
-
-    def __init__(self):
-        pass
-
     def print_coarse_model(self, mesh_file = 'mesh/coarse_model.h5m'):
 
         fine_number_elements = self.number_elements
