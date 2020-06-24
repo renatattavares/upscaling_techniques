@@ -6,15 +6,15 @@ import copy
 import yaml
 #import xlsxwriter
 import numpy as np
-from upscaling_procedures.local.solver import Solver
+from scipy.sparse import lil_matrix
+from scipy.sparse.linalg import spsolve
 from imex_integration.read_dataset import read_dataset
 from upscaling_procedures.local.assembly import Assembly
-from upscaling_procedures.local.mesh_geometry import MeshGeometry
 from upscaling_procedures.local.boundary_conditions import BoundaryConditions
 from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as impress
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 
-class LocalProblems(MeshGeometry, Assembly, BoundaryConditions, Solver):
+class LocalProblems(Assembly, BoundaryConditions):
 
     def __init__(self, mesh_file = None, dataset = None):
 
@@ -90,3 +90,35 @@ class LocalProblems(MeshGeometry, Assembly, BoundaryConditions, Solver):
         elif self.mode is 'integrated':
             self.mesh_file = 'mesh/dataset_mesh.h5m'
             self.porosity, self.permeability, self.number_elements, self.length_elements = read_dataset(dataset)
+
+    def solver(self, transmissibility, source):
+
+        transmissibility = lil_matrix.tocsr(transmissibility)
+        source = lil_matrix.tocsr(source)
+        pressure = spsolve(transmissibility,source)
+
+        return pressure
+
+    def solve_local_problems(self):
+        """
+        Implementation of solver for LocalProblem class
+        """
+        self.pressure = []
+        self.walls = []
+
+        for coarse_volume in range(self.number_coarse_volumes):
+            print('\nSolving local problem {}'.format(coarse_volume))
+            self.coarse_volume = coarse_volume
+            general_transmissibility = self.assembly_local_problem()
+            p = []
+            w = []
+
+            for direction in self.direction_string:
+                print('In {} direction'.format(direction))
+                self.direction = direction
+                transmissibility, source, correct_volumes_group_1 = self.set_boundary_conditions(general_transmissibility)
+                p.append(self.solver(transmissibility, source))
+                w.append(correct_volumes_group_1)
+
+            self.pressure.append(p)
+            self.walls.append(w)

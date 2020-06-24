@@ -28,7 +28,7 @@ class QuickPreprocessor:
         boundary_faces = self.coarse.elements[self.coarse_volume].faces.boundary # Local IDs of boundary faces of a coarse volume
         global_ids_faces = self.coarse.elements[self.coarse_volume].faces.global_id[boundary_faces]
         parallel_direction = self.mesh.parallel_direction[global_ids_faces]
-        index_faces_direction = np.isin(parallel_direction, direction)
+        index_faces_direction = np.isin(parallel_direction, direction_number)
         index_faces_direction = np.where(index_faces_direction == True)[0]
         correct_faces = boundary_faces[index_faces_direction]
 
@@ -53,8 +53,8 @@ class QuickPreprocessor:
         local_ids_group_1 = np.where(index_group_1 == True)[0]
         local_ids_group_2 = np.where(index_group_2 == True)[0]
 
-        correct_volumes_group_1 = self.coarse.elements[self.coarse_volume].faces.bridge_adjacencies(local_ids_group_1, 2, 3).flatten()
-        correct_volumes_group_2 = self.coarse.elements[self.coarse_volume].faces.bridge_adjacencies(local_ids_group_2, 2, 3).flatten()
+        correct_volumes_group_1 = np.unique( self.coarse.elements[self.coarse_volume].faces.bridge_adjacencies(local_ids_group_1, 2, 3).flatten())
+        correct_volumes_group_2 = np.unique( self.coarse.elements[self.coarse_volume].faces.bridge_adjacencies(local_ids_group_2, 2, 3).flatten())
 
         return correct_volumes_group_1, correct_volumes_group_2
 
@@ -93,3 +93,35 @@ class QuickPreprocessor:
         adjacent_volumes = np.unique(adjacent_volumes[repeated_volumes].flatten())
 
         return adjacent_volumes
+
+    def check_coarse_face(self):
+
+        self.number_faces_coarse_face = np.array([], dtype = int)
+
+        self.number_faces_coarse_face = np.append(self.number_faces_coarse_face,  int((self.number_elements[1]/self.ny)*(self.number_elements[2]/self.nz)))
+
+        self.number_faces_coarse_face = np.append(self.number_faces_coarse_face, int((self.number_elements[0]/self.nx)*(self.number_elements[2]/self.nz)))
+
+        self.number_faces_coarse_face = np.append(self.number_faces_coarse_face, int((self.number_elements[0]/self.ny)*(self.number_elements[1]/self.ny)))
+
+
+    def center_distance_walls(self):
+
+        self.center_distance_walls = []
+
+        for cv in range(self.number_coarse_volumes):
+            distance = []
+            min_coord = self.coarse.elements[cv].volumes.center[:].min(axis = 0)
+            max_coord = self.coarse.elements[cv].volumes.center[:].max(axis = 0)
+            distance.append(max_coord[0] - min_coord[0])
+            distance.append(max_coord[1] - min_coord[1])
+            distance.append(max_coord[2] - min_coord[2])
+            self.center_distance_walls.append(distance)
+
+    def areas(self):
+
+        self.areas = np.array([])
+
+        self.areas = np.append(self.areas, self.length_elements[1]*self.length_elements[2])
+        self.areas = np.append(self.areas, self.length_elements[0]*self.length_elements[2])
+        self.areas = np.append(self.areas, self.length_elements[0]*self.length_elements[1])
