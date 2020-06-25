@@ -8,39 +8,15 @@ import multiprocessing as mp
 from imex_integration.read_dataset import read_dataset
 from upscaling_procedures.local.visualize import Visualize
 from upscaling_procedures.local.local_upscaling import LocalUpscaling
-from upscaling_procedures.local.parallel_local_problems import ParallelLocalProblems
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 
-class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling, Visualize):
+class ParallelLocalUpscaling(LocalUpscaling, Visualize):
 
     def __init__(self, mesh_file = None, dataset = None):
 
         initial_time = time.time()
 
-        print('\n##### Parallel local upscaling class initialized #####')
-
-        print('\n##### Treatment of local problems #####')
-
-        if mesh_file is None:
-            self.mode = 'integrated'
-
-        else:
-            self.mode = 'auto'
-            self.mesh_file = mesh_file
-
-        # Setting variables and informations
-        self.boundary_condition_type = 1
-        self.set_coordinate_system()
-        self.set_simulation_variables()
-
-        # Preprocessing mesh with IMPRESS
-        self.preprocess_mesh()
-
-        # Preparing for upscaling
-        self.check_parallel_direction()
-        self.get_mesh_informations(coarse_config())
-        self.center_distance_walls()
-
+        super().__init__(mesh_file, dataset)
         # Upscale in parallel
         self.distribute_data()
         self.create_processes()
@@ -48,125 +24,81 @@ class ParallelLocalUpscaling(ParallelLocalProblems, LocalUpscaling, Visualize):
         final_time = time.time()
         print("\nThe upscaling lasted {0}s".format(final_time-initial_time))
 
-    def set_simulation_variables(self):
+    def distribute_data(self):
 
-        if self.mode is 'auto':
-            self.mesh.permeability[:] = np.array([1,1,1])
-            self.mesh.porosity[:] = 1
+        core_number = mp.cpu_count() # Cores in the computer
+        number_problems_in_process = int(self.number_coarse_volumes/core_number) # Average number of local problems to be solved by one process
+        rest = self.number_coarse_volumes % core_number
+        distribution = []
+        coarse_volumes = np.arange(self.number_coarse_volumes)
 
-            mesh_info_file = 'mesh_info.yml'
+        for i in range(core_number):
+            if i is core_number-1:
+                distribution.append(coarse_volumes[number_problems_in_process*i:number_problems_in_process*(i+1)+rest])
+            else:
+                distribution.append(coarse_volumes[number_problems_in_process*i:number_problems_in_process*(i+1)])
 
-            with open(mesh_info_file, 'r') as file:
-                data = yaml.safe_load(file)
+        self.distribution = distribution
 
-            self.number_elements_x_direction = data['Elements']['x']
-            self.number_elements_y_direction = data['Elements']['y']
-            self.number_elements_z_direction = data['Elements']['z']
+    def upscale_permeability_porosity(self, cv):
 
-            self.length_elements_x_direction = data['Lenght']['x']
-            self.length_elements_y_direction = data['Lenght']['y']
-            self.length_elements_z_direction = data['Lenght']['z']
+        print('Upscaling of local problem {}'.format(cv))
+        self.coarse_volume = cv
+        volume = self.length_elements[0]*self.length_elements[1]*self.length_elements[2]
+        general_transmissibility = self.assembly_local_problem()
+        info = []
+        total_volume = volume*self.number_volumes_local_problem
+        global_ids_volumes = self.coarse.elements[cv].volumes.father_id[:]
+        porosity = self.mesh.porosity[global_ids_volumes]
+        effective_porosity = (volume*porosity).sum()/total_volume
 
-        elif self.mode is 'integrated':
-            self.mesh_file = 'mesh/dataset_mesh.h5m'
-            self.porosity, self.permeability, self.number_elements, self.length_elements = read_dataset(dataset)
+        for direction in self.direction_string:
+            #print('in {} direction'.format(direction))
+            self.direction = direction
+            transmissibility, source, local_wall = self.set_boundary_conditions(general_transmissibility)
+            pressures = self.solver(transmissibility, source)
 
-    def upscale_permeability(self, coarse_volume, pressure):
-
-        area = 1
-        i = coarse_volume
-        effective_permeability = []
-
-        for j in self.direction_string:
-            direction = j
-            if direction == 'x':
-                local_wall = self.get_wall(i, 0)
-                pressures = pressure[0]
-                center_distance_walls = self.center_distance_walls_x[i]
-            elif direction == 'y':
-                local_wall = self.get_wall(i, 1)
-                pressures = pressure[1]
-                center_distance_walls = self.center_distance_walls_y[i]
-            elif direction == 'z':
-                local_wall = self.get_wall(i, 2)
-                pressures = pressure[2]
-                center_distance_walls = self.center_distance_walls_z[i]
-
-            global_wall = self.coarse.elements[i].volumes.global_id[local_wall]
-            local_adj = self.identify_adjacent_volumes_to_wall(i, local_wall)
-            global_adj = self.coarse.elements[i].volumes.global_id[local_adj]
-            center_wall = self.coarse.elements[i].volumes.center[local_wall]
-            center_adj = self.coarse.elements[i].volumes.center[local_adj]
+            direction_number = self.directions_numbers.get(direction)
+            center_distance_walls = self.center_distance_walls[cv][direction_number]
+            area = self.areas[direction_number]
+            global_wall = self.coarse.elements[cv].volumes.global_id[local_wall]
+            local_adj = self.identify_adjacent_volumes_to_wall(cv, local_wall)
+            global_adj = self.coarse.elements[cv].volumes.global_id[local_adj]
+            center_wall = self.coarse.elements[cv].volumes.center[local_wall]
+            center_adj = self.coarse.elements[cv].volumes.center[local_adj]
             pressure_wall = pressures[local_wall]
             pressure_adj = pressures[local_adj]
-            permeability_wall = self.get_absolute_permeabilities(direction, global_wall)
-            permeability_adj = self.get_absolute_permeabilities(direction, global_adj)
+            pw = self.mesh.permeability[global_wall]
+            permeability_wall = pw[:, direction_number]
+            pa = self.mesh.permeability[global_adj]
+            permeability_adj = pa[:, direction_number]
+            flow_rate = ((((2*np.multiply(permeability_wall,permeability_adj)/(permeability_wall+permeability_adj))*(pressure_wall-pressure_adj))*self.areas[direction_number])/np.linalg.norm(center_wall - center_adj, axis = 1)).sum()
+            info.append(center_distance_walls*flow_rate/(area*self.number_faces_coarse_face[direction_number]))
 
-            flow_rate = ((2*np.multiply(permeability_wall,permeability_adj)/(permeability_wall+permeability_adj))*(pressure_wall-pressure_adj)/np.linalg.norm(center_wall - center_adj, axis = 1)).sum()
+        info.append(effective_porosity)
 
-            effective_permeability.append(center_distance_walls*flow_rate/(area*self.number_faces_coarse_face))
+        return info
 
-        return effective_permeability
+    def upscale_permeability_porosity_parallel(self, coarse_volumes, queue):
 
-    def upscale_porosity(self):
-        pass
-
-    def get_wall(self, coarse_volume, direction):
-
-        i = coarse_volume
-        wall = np.zeros((1, self.number_faces_coarse_face), dtype = int)
-
-        boundary_faces = self.coarse.elements[i].faces.boundary # Local IDs of boundary faces of a coarse volume
-        global_ids_faces = self.coarse.elements[i].faces.global_id[boundary_faces]
-        parallel_direction = self.mesh.parallel_direction[global_ids_faces]
-        index_faces_direction = np.isin(parallel_direction, direction)
-        index_faces_direction = np.where(index_faces_direction == True)[0]
-        correct_faces = boundary_faces[index_faces_direction]
-
-        # Separate faces in two groups
-        global_ids_correct_faces = self.coarse.elements[i].faces.global_id[correct_faces]
-        interface_coarse_face_id = self.coarse.iface_neighbors(i)[1]
-
-        for j in range(len(interface_coarse_face_id)):
-            interface_faces = self.coarse.interfaces_faces[int(interface_coarse_face_id[j])]
-            verify = np.any(np.isin(interface_faces, global_ids_correct_faces[0]))
-            if verify == True:
-                index = np.isin(interface_faces, global_ids_correct_faces)
-                group_1 = interface_faces[index]
-                break
-
-        global_ids_faces = self.coarse.elements[i].faces.global_id[:]
-        index_group_1 = np.isin(global_ids_faces, group_1)
-        local_ids_group_1 = np.where(index_group_1 == True)[0]
-
-        wall = self.coarse.elements[i].faces.bridge_adjacencies(local_ids_group_1, 2, 3).flatten()
-
-        return wall
-
-    def upscale_permeability_parallel(self, coarse_volumes, queue):
-
-        ep = []
+        info = []
 
         for cv in coarse_volumes:
-            p = self.solve_local_problems(cv)
-            ep.append(self.upscale_permeability(cv, p))
-            print('Done with coarse volume {}'.format(cv))
+            info.append(self.upscale_permeability_porosity(cv))
 
-        queue.put(ep)
+        queue.put(info)
 
     def create_processes(self):
 
-        effective_permeabilities = []
+        self.info = []
         process_number = len(self.distribution)
 
         queues = [mp.Queue() for i in range(process_number)]
-        processes = [mp.Process(target = self.upscale_permeability_parallel, args = (i,q,)) for i, q in zip(self.distribution, queues)]
+        processes = [mp.Process(target = self.upscale_permeability_porosity_parallel, args = (i,q,)) for i, q in zip(self.distribution, queues)]
 
         for p in processes:
             p.start()
 
         for p, q in zip(processes, queues):
-            effective_permeabilities.append(q.get())
+            self.info.append(q.get())
             p.join()
-
-        self.effective_permeability = effective_permeabilities

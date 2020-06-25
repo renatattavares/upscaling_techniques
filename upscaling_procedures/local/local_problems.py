@@ -18,22 +18,27 @@ class LocalProblems(Assembly, BoundaryConditions):
 
     def __init__(self, mesh_file = None, dataset = None):
 
-        print('\n##### Treatment of local problems #####')
+        print('\n##### LocalProblems class initialized #####')
 
         if mesh_file is None:
-            self.mode = 'integrated'
+            self.mesh_file = 'mesh/dataset_mesh.h5m'
+            porosity, permeability, self.number_elements, self.length_elements = read_dataset(dataset)
+            # Preprocessing mesh with IMPRESS
+            self.preprocess_mesh()
+            self.mesh.porosity[:] = porosity
+            self.mesh.permeability[:] = permeability
 
         else:
             self.mode = 'auto'
             self.mesh_file = mesh_file
+            # Preprocessing mesh with IMPRESS
+            self.preprocess_mesh()
+            self.set_simulation_variables()
 
-        # Preprocessing mesh with IMPRESS
-        self.preprocess_mesh()
 
         # Setting variables and informations
         self.boundary_condition_type = 1 # Fixed pressure
         self.set_coordinate_system()
-        self.set_simulation_variables()
 
         # Preparing to solve local problems
         self.check_parallel_direction()
@@ -69,27 +74,22 @@ class LocalProblems(Assembly, BoundaryConditions):
 
     def set_simulation_variables(self):
 
-        if self.mode is 'auto':
-            self.mesh.permeability[:] = np.array([1,1,1])
-            self.mesh.porosity[:] = 1
+        self.mesh.permeability[:] = np.array([1,1,1])
+        self.mesh.porosity[:] = 1
 
-            mesh_info_file = 'mesh_info.yml'
+        mesh_info_file = 'mesh_info.yml'
 
-            with open(mesh_info_file, 'r') as file:
-                data = yaml.safe_load(file)
+        with open(mesh_info_file, 'r') as file:
+            data = yaml.safe_load(file)
 
-            number_elements = data['Elements']
-            lenght_elements = data['Length']
-            self.number_elements = np.array([], dtype = int)
-            self.length_elements = np.array([], dtype = int)
+        number_elements = data['Elements']
+        lenght_elements = data['Length']
+        self.number_elements = np.array([], dtype = int)
+        self.length_elements = np.array([], dtype = int)
 
-            for number, lenght in zip(number_elements.values(), lenght_elements.values()):
-                self.number_elements = np.append(self.number_elements, number)
-                self.length_elements = np.append(self.length_elements, lenght)
-
-        elif self.mode is 'integrated':
-            self.mesh_file = 'mesh/dataset_mesh.h5m'
-            self.porosity, self.permeability, self.number_elements, self.length_elements = read_dataset(dataset)
+        for number, lenght in zip(number_elements.values(), lenght_elements.values()):
+            self.number_elements = np.append(self.number_elements, number)
+            self.length_elements = np.append(self.length_elements, lenght)
 
     def solver(self, transmissibility, source):
 

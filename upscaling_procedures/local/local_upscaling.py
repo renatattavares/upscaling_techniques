@@ -10,10 +10,12 @@ class LocalUpscaling(LocalProblems):
     def __init__(self, mesh_file = None, dataset = None):
         initial_time = time.time()
 
+        print('\n##### LocalUpscaling class initialized #####')
+
         super().__init__(mesh_file, dataset)
         self.center_distance_walls()
         self.areas()
-        self.upscale_permeability_porosity()
+        #self.upscale_permeability_porosity()
 
         final_time = time.time()
         print("\nThe upscaling lasted {0}s".format(final_time-initial_time))
@@ -28,7 +30,7 @@ class LocalUpscaling(LocalProblems):
         volume = self.length_elements[0]*self.length_elements[1]*self.length_elements[2]
 
         for cv in range(self.number_coarse_volumes):
-            print('\nUpscaling of local problem {}'.format(cv))
+            print('Upscaling of local problem {}'.format(cv))
             self.coarse_volume = cv
             general_transmissibility = self.assembly_local_problem()
             effective_permeability = []
@@ -57,7 +59,7 @@ class LocalUpscaling(LocalProblems):
                 permeability_wall = pw[:, direction_number]
                 pa = self.mesh.permeability[global_adj]
                 permeability_adj = pa[:, direction_number]
-                flow_rate = ((2*np.multiply(permeability_wall,permeability_adj)/(permeability_wall+permeability_adj))*(pressure_wall-pressure_adj)/np.linalg.norm(center_wall - center_adj, axis = 1)).sum()
+                flow_rate = ((((2*np.multiply(permeability_wall,permeability_adj)/(permeability_wall+permeability_adj))*(pressure_wall-pressure_adj))*self.areas[direction_number])/np.linalg.norm(center_wall - center_adj, axis = 1)).sum()
                 effective_permeability.append(center_distance_walls*flow_rate/(area*self.number_faces_coarse_face[direction_number]))
 
             self.effective_permeability.append(effective_permeability)

@@ -107,3 +107,6 @@ venv.bak/
 # Mesh
 *.vtk
 *.h5m
+
+# Docker command
+docker.txt

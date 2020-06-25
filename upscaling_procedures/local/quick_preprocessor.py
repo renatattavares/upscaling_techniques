@@ -35,6 +35,7 @@ class QuickPreprocessor:
         # Separate faces in two groups
         global_ids_correct_faces = self.coarse.elements[self.coarse_volume].faces.global_id[correct_faces]
         interface_coarse_face_id = self.coarse.iface_neighbors(self.coarse_volume)[1]
+        exception = self.coarse.iface_neighbors(self.coarse_volume)[0]
 
         for j in range(len(interface_coarse_face_id)):
             interface_faces = self.coarse.interfaces_faces[int(interface_coarse_face_id[j])]
@@ -66,14 +67,14 @@ class QuickPreprocessor:
         Identifies the direction that is parallel to the normal vector of each face
         """
         self.mesh.parallel_direction[:] = 4
-        j = 0
 
-        for i in self.direction_string:
-            self.direction = self.directions_dictionary.get(i)
+        for direction in np.array(['x', 'y', 'z']):
+            d = self.directions_dictionary.get(direction)
+            direction_number = self.directions_numbers.get(direction)
             global_ids_faces = np.arange(len(self.mesh.faces))
             normal_faces = self.mesh.faces.normal[global_ids_faces]
             direction_vector = np.ndarray(shape = np.shape(normal_faces), dtype = float)
-            direction_vector = np.full_like(direction_vector, self.direction)
+            direction_vector = np.full_like(direction_vector, d)
 
             # Cross product and norm
             cross_product = np.cross(normal_faces, direction_vector)
@@ -83,8 +84,7 @@ class QuickPreprocessor:
             correct_faces = np.isin(norm_cross_product, 0)
             index_correct_faces = np.where(correct_faces == True)[0]
             correct_faces = global_ids_faces[index_correct_faces]
-            self.mesh.parallel_direction[correct_faces] = int(j)
-            j+= 1
+            self.mesh.parallel_direction[correct_faces] = int(direction_number)
 
     def identify_adjacent_volumes_to_wall(self, coarse_volume, wall):
 

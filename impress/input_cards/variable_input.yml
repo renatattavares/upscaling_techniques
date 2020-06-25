@@ -6,19 +6,12 @@
 # data format must be a string
 # level must be an integer
 
-permz:
-  type: volumes
-  data size: 1
-  data type: float
-  sparse: False
-  level: 0
-
-pressure:
-  type: volumes
-  data size: 1
-  data type: float
-  sparse: False
-  level: 0
+# pressure:
+#   type: volumes
+#   data size: 1
+#   data type: float
+#   sparse: False
+#   level: 0
 
 permeability:
   type: volumes
@@ -43,23 +36,23 @@ parallel_direction:
 
 # Print coarse model
 
-kefx:
-  type: volumes
-  data size: 1
-  data type: float
-  sparse: False
-  level: 0
-
-kefy:
-  type: volumes
-  data size: 1
-  data type: float
-  sparse: False
-  level: 0
-
-kefz:
-  type: volumes
-  data size: 1
-  data type: float
-  sparse: False
-  level: 0
+# kefx:
+#   type: volumes
+#   data size: 1
+#   data type: float
+#   sparse: True
+#   level: 0
+#
+# kefy:
+#   type: volumes
+#   data size: 1
+#   data type: float
+#   sparse: True
+#   level: 0
+#
+# kefz:
+#   type: volumes
+#   data size: 1
+#   data type: float
+#   sparse: True
+#   level: 0
