@@ -13,8 +13,8 @@ from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as im
 #lu = LocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
 
 ############### RUN PARALLEL LOCAL UPSCALING ###############
-#lu = ParallelLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
-lu = ParallelLocalUpscaling(mesh_file = None, dataset ='imex_datasets/spe_10_case_2/spe_10_case_2.dat')
+lu = ParallelLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
+#lu = ParallelLocalUpscaling(mesh_file = None, dataset ='imex_datasets/spe_10_case_2/spe_10_case_2.dat')
 
 ############### READ DATASET ###############
 #porosity, permeability = read_dataset('imex_datasets/spe_10_case_2/spe_10_case_2.dat')

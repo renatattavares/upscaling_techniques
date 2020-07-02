@@ -14,15 +14,14 @@ class ParallelLocalUpscaling(LocalUpscaling, Visualize):
 
     def __init__(self, mesh_file = None, dataset = None):
 
-        initial_time = time.time()
+        self.initial_time = time.time()
 
         super().__init__(mesh_file, dataset)
         # Upscale in parallel
         self.distribute_data()
         self.create_processes()
 
-        final_time = time.time()
-        print("\nThe upscaling lasted {0}s".format(final_time-initial_time))
+        print("\nThe upscaling lasted {0}s".format(self.final_time-self.initial_time))
 
     def distribute_data(self):
 
@@ -102,3 +101,5 @@ class ParallelLocalUpscaling(LocalUpscaling, Visualize):
         for p, q in zip(processes, queues):
             self.info.append(q.get())
             p.join()
+
+        self.final_time = time.time()

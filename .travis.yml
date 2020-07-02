@@ -1,0 +1,18 @@
+sudo: required
+
+language: python
+
+services:
+  - docker
+
+before_install:
+  - docker pull gabrielmmats/impress
+
+install:
+  - pip3 install coveralls
+
+script:
+  - docker run -t -it -v $PWD:/test gabrielmmats/impress bash -c "cd /test && python -m unittest code_tests/test_20_case.py"
+
+after_success:
+  - coveralls

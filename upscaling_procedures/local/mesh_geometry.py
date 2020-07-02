@@ -12,7 +12,6 @@ class MeshGeometry:
 
         self.number_faces_coarse_face = np.append(self.number_faces_coarse_face, int((self.number_elements[0]/self.ny)*(self.number_elements[1]/self.ny)))
 
-
     def center_distance_walls(self):
 
         self.center_distance_walls_x = np.array([])
@@ -33,4 +32,3 @@ class MeshGeometry:
         self.areas = np.append(self.areas, self.length_elements[1]*self.length_elements[2])
         self.areas = np.append(self.areas, self.length_elements[0]*self.length_elements[2])
         self.areas = np.append(self.areas, self.length_elements[0]*self.length_elements[1])
-             
