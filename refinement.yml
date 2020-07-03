@@ -1,0 +1,8 @@
+# Refinement informations
+
+refine: False
+
+1:
+  first: [0,0,0]
+  last: [1,1,1]
+  length: [0.5,0.5,0.5]

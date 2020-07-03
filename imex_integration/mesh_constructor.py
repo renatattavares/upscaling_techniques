@@ -1,40 +1,53 @@
+import yaml
 import numpy as np
 from pymoab import core, types, rng
 
 class MeshConstructor:
 
-    def __init__(self, number_elements, length_elements, mesh_file):
+    def __init__(self, number_elements, length_elements, mesh_file, refinement = 'refinement.yml'):
+
         print('\n##### Generating mesh file #####')
+
         self.mesh_file = mesh_file
-        elements = number_elements
-        length = length_elements
 
-        self.dx = length[0]
-        self.dy = length[1]
-        self.dz = length[2]
+        self.dx = length_elements[0]
+        self.dy = length_elements[1]
+        self.dz = length_elements[2]
 
-        self.nx = elements[0]
-        self.ny = elements[1]
-        self.nz = elements[2]
+        self.nx = number_elements[0]
+        self.ny = number_elements[1]
+        self.nz = number_elements[2]
 
         self.mbcore = core.Core() # Criando instância da classe Core que gerencias as operações na malha
         self.num_elements = self.nx*self.ny*self.nz
-        num_vertex = (self.nx+1)*(self.ny+1)*(self.nz+1)
 
-        print('\nCreating vertices coordinates...')
+        with open('refinement.yml', 'r') as file:
+            data = yaml.safe_load(file)
+
+        if data['refine'] is True:
+            pass
+
+        else:
+            print('\nCreating vertices coordinates...')
+            self.create_vertices_coordinates()
+            print('Creating connectivities...')
+            self.mesh_connectivity = self.create_mesh_connectivity()
+            print("Creating elements' handles...")
+            self.create_elements_handles()
+            self.write_files()
+            print('\n##### File mesh created #####')
+
+    def create_vertices_coordinates(self):
+
+        num_vertex = (self.nx+1)*(self.ny+1)*(self.nz+1)
         self.vertex_coords = np.zeros(num_vertex*3)
+
         for i in range(num_vertex):
             self.vertex_coords[3*i] = (i % (self.nx+1))*self.dx
             self.vertex_coords[3*i+1] = ((i // (self.nx+1)) % (self.ny+1))*self.dy
             self.vertex_coords[3*i+2] = ((i // ((self.nx+1)*(self.ny+1))) % (self.nz+1))*self.dz
 
         self.vertex_handles = self.mbcore.create_vertices(self.vertex_coords) # Criando os handles dos vértices
-        print('Creating connectivities...')
-        self.mesh_connectivity = self.create_mesh_connectivity()
-
-        print('Creating element handles...')
-        self.elem_handles = rng.Range([self.mbcore.create_element(types.MBHEX, x) for x in self.mesh_connectivity])
-        self.write_files()
 
     def create_mesh_connectivity(self):
 
@@ -55,6 +68,9 @@ class MeshConstructor:
 
         return self.mesh_connectivity
 
+    def create_elements_handles(self):
+        self.elem_handles = rng.Range([self.mbcore.create_element(types.MBHEX, x) for x in self.mesh_connectivity])
+
     def write_files(self):
         self.meshset = self.mbcore.create_meshset()
         self.mbcore.add_entities(self.meshset, self.elem_handles)
@@ -62,4 +78,3 @@ class MeshConstructor:
         # Escrevendo malha em arquivo vtk para visualização no visit. Para utilizar a função write_file é necessário ter uma entidade iterável. Portanto, é necessária a criação de um range
         mesh_file = rng.Range(self.meshset)
         self.mbcore.write_file(self.mesh_file)
-        print('\nMesh created')
