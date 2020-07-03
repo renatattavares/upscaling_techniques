@@ -12,7 +12,7 @@ install:
   - pip3 install coveralls
 
 script:
-  - docker run -t -it -v $PWD:/test gabrielmmats/impress bash -c "ls -a && pwd"
+  - docker run -t -it -v $PWD:/test gabrielmmats/impress bash -c "cd /home; ./pymoab_update.sh; cd ../test; python3 -m unittest code_tests/test_20_case.py"
 
 after_success:
   - coveralls
