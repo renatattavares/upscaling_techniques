@@ -12,7 +12,7 @@ install:
   - pip3 install coveralls
 
 script:
-  - docker run -t -it -v $PWD:/test gabrielmmats/impress bash -c "cd /test && bash run_test.sh"
-  
+  - docker run -t -it -v $PWD:/test gabrielmmats/impress bash -c "ls -a && pwd"
+
 after_success:
   - coveralls
