@@ -1,80 +1,90 @@
 import yaml
 import numpy as np
 from pymoab import core, types, rng
+from imex_integration.refinement import Refinement
 
-class MeshConstructor:
+class MeshConstructor(Refinement):
 
-    def __init__(self, number_elements, length_elements, mesh_file, refinement = 'refinement.yml'):
+    def __init__(self, number_elements, length_elements, mesh_file):
 
         print('\n##### Generating mesh file #####')
-
         self.mesh_file = mesh_file
-
-        self.dx = length_elements[0]
-        self.dy = length_elements[1]
-        self.dz = length_elements[2]
-
-        self.nx = number_elements[0]
-        self.ny = number_elements[1]
-        self.nz = number_elements[2]
-
         self.mbcore = core.Core() # Criando instância da classe Core que gerencias as operações na malha
-        self.num_elements = self.nx*self.ny*self.nz
+        refine = self.check_if_refinement_is_required()
 
-        with open('refinement.yml', 'r') as file:
-            data = yaml.safe_load(file)
-
-        if data['refine'] is True:
-            pass
-
-        else:
+        if refine is False: # Refinement is not required
             print('\nCreating vertices coordinates...')
-            self.create_vertices_coordinates()
-            print('Creating connectivities...')
-            self.mesh_connectivity = self.create_mesh_connectivity()
+            self.coords = self.create_vertices_coords(number_elements, length_elements, np.array([0,0,0]))
+            print('Creating mesh connectivities...')
+            self.mesh_connectivity = self.create_mesh_connectivity(number_elements, length_elements, self.coords)
             print("Creating elements' handles...")
-            self.create_elements_handles()
-            self.write_files()
-            print('\n##### File mesh created #####')
+            self.elements_handles = self.create_elements_handles(self.mesh_connectivity, self.coords)
+            print('Writing file...')
+            self.mbcore.write_file(self.mesh_file)
+            print('\n##### Mesh file created #####')
 
-    def create_vertices_coordinates(self):
+        else: # Refinement is required
+            print('\nCreating vertices coordinates...')
+            self.coords = self.create_vertices_coords(number_elements, length_elements, np.array([0,0,0]))
+            self.mesh_connectivity = self.create_mesh_connectivity(number_elements, length_elements, self.coords) # Indexed of vertices coords that composes an element
+            self.read_refinement_info()
+            self.create_refinement_vertices_coords()
+            new_mesh_connectivity = self.rewrite_mesh_connectivity(self.mesh_connectivity, self.coords, self.new_coords)
+            new_refinement_mesh_connectivity = self.rewrite_mesh_connectivity(self.connectivities[0], self.refinement_coords, self.new_coords)
+            print("Creating elements' handles...")
+            self.elements_handles = self.create_elements_handles(new_mesh_connectivity, self.new_coords)
+            self.elements_handles = self.create_elements_handles(new_refinement_mesh_connectivity, self.new_coords)
+            print('Writing file...')
+            self.mbcore.write_file(self.mesh_file)
+            print('\n##### Mesh file created #####')
 
-        num_vertex = (self.nx+1)*(self.ny+1)*(self.nz+1)
-        self.vertex_coords = np.zeros(num_vertex*3)
+    def create_vertices_coords(self, number_elements, length_elements, mesh_origin):
+
+        nx = number_elements[0]
+        ny = number_elements[1]
+        nz = number_elements[2]
+
+        dx = length_elements[0]
+        dy = length_elements[1]
+        dz = length_elements[2]
+
+        num_vertex = int((nx+1)*(ny+1)*(nz+1))
+        vertex_coords = np.zeros(num_vertex*3)
 
         for i in range(num_vertex):
-            self.vertex_coords[3*i] = (i % (self.nx+1))*self.dx
-            self.vertex_coords[3*i+1] = ((i // (self.nx+1)) % (self.ny+1))*self.dy
-            self.vertex_coords[3*i+2] = ((i // ((self.nx+1)*(self.ny+1))) % (self.nz+1))*self.dz
+            vertex_coords[3*i] = (i % (nx+1))*dx + mesh_origin[0]
+            vertex_coords[3*i+1] = ((i // (nx+1)) % (ny+1))*dy + mesh_origin[1]
+            vertex_coords[3*i+2] = ((i // ((nx+1)*(ny+1))) % (nz+1))*dz + mesh_origin[2]
 
-        self.vertex_handles = self.mbcore.create_vertices(self.vertex_coords) # Criando os handles dos vértices
+        return vertex_coords
 
-    def create_mesh_connectivity(self):
+    def create_mesh_connectivity(self, number_elements, length_elements, vertex_coords):
 
         k = 0
-        self.mesh_connectivity = np.zeros((self.num_elements, 8), dtype=np.uint64)
+        nx = number_elements[0]
+        ny = number_elements[1]
+        nz = number_elements[2]
+        dx = length_elements[0]
+        dy = length_elements[1]
+        dz = length_elements[2]
+        num_elements = nx*ny*nz
+        mesh_connectivity = np.zeros((num_elements, 8), dtype = int)
 
         # Defining the vertices which can start an element, i.e., starting from this
         # vertex one can get five more valid vertices to build an element.
-        indexes = [v-1 for v in self.vertex_handles
-                        if (self.vertex_coords[3*(int(v)-1)] != self.nx*self.dx) and
-                            (self.vertex_coords[3*(int(v)-1)+1] != self.ny*self.dy) and
-                            (self.vertex_coords[3*(int(v)-1)+2] != self.nz*self.dz)]
+        coords_indexes = np.arange(int(len(vertex_coords)/3), dtype = int)
+        indexes = [int(v) for v in coords_indexes if (vertex_coords[(3*v)] != nx*dx) and (vertex_coords[(3*v)+1] != ny*dy) and (vertex_coords[(3*v)+2] != nz*dz)]
 
         for i in indexes:
-            self.mesh_connectivity[k] = [self.vertex_handles[int(i)], self.vertex_handles[int(i)+1], self.vertex_handles[int(i+self.nx+2)], self.vertex_handles[int(i+self.nx+1)], self.vertex_handles[int(i+(self.nx+1)*(self.ny+1))], self.vertex_handles[int(i+(self.nx+1)*(self.ny+1)+1)],                 self.vertex_handles[int(i+(self.nx+1)*(self.ny+2)+1)], self.vertex_handles[int(i+(self.nx+1)*(self.ny+2))]]
-
+            mesh_connectivity[k] = [coords_indexes[i], coords_indexes[i+1], coords_indexes[int(i+nx+2)], coords_indexes[int(i+nx+1)], coords_indexes[int(i+(nx+1)*(ny+1))], coords_indexes[int(i+(nx+1)*(ny+1)+1)],                 coords_indexes[int(i+(nx+1)*(ny+2)+1)], coords_indexes[int(i+(nx+1)*(ny+2))]]
             k += 1
 
-        return self.mesh_connectivity
+        return mesh_connectivity
 
-    def create_elements_handles(self):
-        self.elem_handles = rng.Range([self.mbcore.create_element(types.MBHEX, x) for x in self.mesh_connectivity])
+    def create_elements_handles(self, connectivity, vertex_coords):
 
-    def write_files(self):
-        self.meshset = self.mbcore.create_meshset()
-        self.mbcore.add_entities(self.meshset, self.elem_handles)
+        self.vertex_handles = self.mbcore.create_vertices(vertex_coords) # Criando os handles dos vértices
+        connectivity = (connectivity + 1).astype('uint64')
+        elements_handles = rng.Range([self.mbcore.create_element(types.MBHEX, x) for x in connectivity])
 
-        # Escrevendo malha em arquivo vtk para visualização no visit. Para utilizar a função write_file é necessário ter uma entidade iterável. Portanto, é necessária a criação de um range
-        mesh_file = rng.Range(self.meshset)
-        self.mbcore.write_file(self.mesh_file)
+        return elements_handles

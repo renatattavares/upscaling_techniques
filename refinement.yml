@@ -1,8 +1,25 @@
 # Refinement informations
 
-refine: False
+refine: True
 
-1:
-  first: [0,0,0]
-  last: [1,1,1]
+region: # region tag should be used to indicate a new region to be refinement
   length: [0.5,0.5,0.5]
+  1: [0,0,0] # Coords of the boundaries of region that will be refined
+  2: [1,0,0]
+  3: [0,1,0]
+  4: [0,0,1]
+  5: [1,1,0]
+  6: [1,0,1]
+  7: [0,1,1]
+  8: [1,1,1]
+
+# region:
+#  length: [0.5,0.5,0.5]
+#  1: [0,0,0] #
+#  2: [1,0,0]
+#  3: [0,1,0]
+#  4: [0,0,1]
+#  5: [1,1,0]
+#  6: [1,0,1]
+#  7: [0,1,1]
+#  8: [1,1,2]
