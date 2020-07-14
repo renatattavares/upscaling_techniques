@@ -4,8 +4,7 @@ from upscaling_procedures.local.parallel_local_upscaling import ParallelLocalUps
 
 class Test20Case(unittest.TestCase):
 
-    def setup(self):
-
+    def setUp(self):
         self.lu = ParallelLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
         self.lu.save_info()
 
