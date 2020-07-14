@@ -23,51 +23,88 @@ class Refinement():
             else:
                 self.refinements.append(self.data[key])
 
-    def create_refinement_vertices_coords(self):
+    def refine_regions(self):
 
         coords = np.reshape(self.coords, newshape = (int(len(self.coords)/3), 3))
-        region_coords = []
-        self.connectivities = []
+        region_number = np.arange(len(self.refinements) + 1)
+        self.new_coords = coords
+        refinements_connectivities = []
+        refinements_coords = []
 
-        for region in self.refinements:
-            delete = []
-
-            for i in range(8):
-                region_coords.append(region[i+1])
-
+        for region, number in zip(self.refinements, region_number):
+            print('Refining region number {}'.format(number))
+            region_coords, origin, last  = self.get_refinement_coords(region)
             length = np.array(region['length'])
-            elements = ((np.array(region_coords[7]) - np.array(region_coords[0])) / length).astype('int')
-            refinement_coords = self.create_vertices_coords(elements, length, region_coords[0])
-            self.refinement_coords = refinement_coords
-            refinement_connectivity = self.create_mesh_connectivity(elements, length, refinement_coords)
+            elements = ((last - origin) / length).astype('int')
+            refinement_coords = self.create_vertices_coords(elements, length, np.array([0,0,0]))
+            refinements_connectivities.append(self.create_mesh_connectivity(elements, length, refinement_coords))
             refinement_coords = np.reshape(refinement_coords, newshape = (int(len(refinement_coords)/3), 3))
+            refinement_coords = refinement_coords + origin
+            refinements_coords.append(refinement_coords)
+            self.update_mesh_connectivity(coords, refinement_coords)
 
-            for element in self.mesh_connectivity:
-                vertices = coords[element]
-                delete_element = np.all(np.isin(vertices, refinement_coords))
-                if delete_element == True:
-                    delete.append(np.where(self.mesh_connectivity == element)[0])
+        print('\nUpdating vertices coordinates...')
+        for c in refinements_coords:
+            coords = self.update_mesh_coords(coords, c)
+            coords = np.append(coords, c.flatten())
+            coords = np.reshape(coords, newshape = (int(len(coords)/3), 3))
 
-            self.mesh_connectivity = np.delete(self.mesh_connectivity, delete, axis = 0)
-            self.connectivities.append(refinement_connectivity)
+        self.new_coords = coords
+
+        print("Creating refinement elements' handles...")
+        for connectivity, coords in zip(refinements_connectivities, refinements_coords):
+            new_mesh_connectivity = self.rewrite_mesh_connectivity(connectivity, coords, self.new_coords)
+            self.create_elements_handles(new_mesh_connectivity, self.new_coords.flatten())
+
+    def get_refinement_coords(self, dict):
+
+        region_coords = []
+
+        for i in range(8):
+            region_coords.append(dict[i+1])
 
         region_coords = np.array(region_coords)
+        norms = np.linalg.norm(region_coords, axis = 1)
+        origin = region_coords[np.argmin(norms)] # The closest point to mesh origin in refinement coords
+        last = region_coords[np.argmax(norms)] # The farthest point to mesh origin in refinement coords
+
+        return region_coords, origin, last
+
+    def update_mesh_coords(self, coords, refinement_coords):
+
         delete = []
-        for i in region_coords:
+        new_coords = coords
+
+        for i in refinement_coords:
             k = 0
             for j in coords:
                 if np.array_equal(i,j):
                     delete.append(k)
                 k += 1
 
-        self.new_coords = np.delete(coords, delete, axis = 0).flatten()
-        self.new_coords = np.append(self.new_coords, refinement_coords.flatten())
+        new_coords = np.delete(coords, delete, axis = 0)
 
+        return new_coords
+
+    def update_mesh_connectivity(self, coords, refinement_coords):
+
+        delete = []
+        for element in self.mesh_connectivity:
+            #print('Elemento')
+            vertices = coords[element]
+            d = True
+            for v in vertices:
+                array = np.full_like(refinement_coords, v)
+                d = np.any(np.all(array == refinement_coords, axis = 1))
+                if d == False:
+                    break
+            if d == True:
+                delete.append(np.where(self.mesh_connectivity == element)[0])
+
+        self.mesh_connectivity = np.delete(self.mesh_connectivity, delete, axis = 0)
 
     def rewrite_mesh_connectivity(self, mesh_connectivity, old_coords, new_coords):
 
-        old_coords = np.reshape(old_coords, newshape = (int(len(old_coords)/3), 3))
-        new_coords = np.reshape(new_coords, newshape = (int(len(new_coords)/3), 3))
         new_mesh_connectivity = []
 
         for element in mesh_connectivity:

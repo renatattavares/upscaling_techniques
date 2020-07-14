@@ -9,14 +9,14 @@ class MeshConstructor(Refinement):
 
         print('\n##### Generating mesh file #####')
         self.mesh_file = mesh_file
-        self.mbcore = core.Core() # Criando instância da classe Core que gerencias as operações na malha
+        self.mbcore = core.Core() # MOAB Core -> Mesh Management
         refine = self.check_if_refinement_is_required()
 
         if refine is False: # Refinement is not required
             print('\nCreating vertices coordinates...')
             self.coords = self.create_vertices_coords(number_elements, length_elements, np.array([0,0,0]))
             print('Creating mesh connectivities...')
-            self.mesh_connectivity = self.create_mesh_connectivity(number_elements, length_elements, self.coords)
+            self.mesh_connectivity = self.create_mesh_connectivity(number_elements, length_elements, self.coords) # Indexes of vertices coords that composes an element
             print("Creating elements' handles...")
             self.elements_handles = self.create_elements_handles(self.mesh_connectivity, self.coords)
             print('Writing file...')
@@ -26,14 +26,16 @@ class MeshConstructor(Refinement):
         else: # Refinement is required
             print('\nCreating vertices coordinates...')
             self.coords = self.create_vertices_coords(number_elements, length_elements, np.array([0,0,0]))
-            self.mesh_connectivity = self.create_mesh_connectivity(number_elements, length_elements, self.coords) # Indexed of vertices coords that composes an element
+            print('Creating mesh connectivities...')
+            self.mesh_connectivity = self.create_mesh_connectivity(number_elements, length_elements, self.coords) # Indexes of vertices coords that composes an element
             self.read_refinement_info()
-            self.create_refinement_vertices_coords()
-            new_mesh_connectivity = self.rewrite_mesh_connectivity(self.mesh_connectivity, self.coords, self.new_coords)
-            new_refinement_mesh_connectivity = self.rewrite_mesh_connectivity(self.connectivities[0], self.refinement_coords, self.new_coords)
+            print('Starting refinement step...\n')
+            self.refine_regions()
+            coords = np.reshape(self.coords, newshape = (int(len(self.coords)/3), 3))
+            print('Rewriting mesh connectivity...')
+            new_mesh_connectivity = self.rewrite_mesh_connectivity(self.mesh_connectivity, coords, self.new_coords)
             print("Creating elements' handles...")
-            self.elements_handles = self.create_elements_handles(new_mesh_connectivity, self.new_coords)
-            self.elements_handles = self.create_elements_handles(new_refinement_mesh_connectivity, self.new_coords)
+            self.handles = self.create_elements_handles(new_mesh_connectivity, self.new_coords.flatten())
             print('Writing file...')
             self.mbcore.write_file(self.mesh_file)
             print('\n##### Mesh file created #####')
