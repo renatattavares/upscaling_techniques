@@ -39,14 +39,20 @@ class Visualize:
     #     self.mesh.permz[:] = perm[:,2]
     #     self.mesh.core.print()
 
-    def save_info(self):
+    def export_info(self):
 
-        self.effective_permeability = np.zeros((len(self.mesh.coarse.elements), 3))
-        self.effective_porosity = np.zeros((len(self.mesh.coarse.elements), 1))
+        effective_permeability = np.zeros((len(self.mesh.coarse.elements), 3))
+        effective_porosity = np.zeros((len(self.mesh.coarse.elements), 1))
 
         for infos, volumes in zip(self.info, self.distribution):
             for info, volume in zip(infos, volumes):
-                    self.effective_permeability[volume][0] = info[0]
-                    self.effective_permeability[volume][1] = info[1]
-                    self.effective_permeability[volume][2] = info[2]
-                    self.effective_porosity[volume] = info[3]
+                    effective_permeability[volume][0] = info[0]
+                    effective_permeability[volume][1] = info[1]
+                    effective_permeability[volume][2] = info[2]
+                    effective_porosity[volume] = info[3]
+
+        return effective_porosity, effective_permeability
+
+    def save_info(self):
+
+        self.effective_porosity, self.effective_permeability = self.export_info()

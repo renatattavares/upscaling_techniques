@@ -1,6 +1,6 @@
 # Refinement informations
 
-refine: True
+refine: False
 
 # region0:
 #   length: [0.5,0.5,0.5]

@@ -14,6 +14,7 @@ class QuickPreprocessor:
 
         self.number_coarse_volumes = len(self.coarse.elements) # Number of volumes from the coarse mesh
         self.number_volumes_local_problem = int(len(self.mesh.volumes)/(self.nx*self.ny*self.nz)) # Number of fine scale volumes inside a coarse volume
+        self.coarsening = np.array([self.nx, self.ny, self.nz])
 
         print('\nMesh informations accessed')
 

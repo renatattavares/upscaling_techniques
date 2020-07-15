@@ -22,7 +22,7 @@ class LocalProblems(Assembly, BoundaryConditions):
 
         if mesh_file is None:
             self.mesh_file = 'mesh/dataset_mesh.h5m'
-            porosity, permeability, self.number_elements, self.length_elements = read_dataset(dataset)
+            porosity, permeability, self.number_elements, self.length_elements = read_dataset(dataset, self.mesh_file)
             # Preprocessing mesh with IMPRESS
             self.preprocess_mesh()
             self.mesh.porosity[:] = porosity
