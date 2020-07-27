@@ -24,8 +24,11 @@ por, perm = lu.export_info()
 ############## READ DATASET ###############
 #por, perm, number_elements, length_elements  = read_dataset('imex_datasets/spe_10_case_2/spe_10_case_2.dat', 'mesh1.h5m')
 
+
 ############### WRITE DATASET ###############
-new_dataset = DatasetWriter('imex_datasets/spe_10_case_2/spe_10_case_2.dat', lu.number_elements, lu.length_elements, por, perm)
+#new_dataset = DatasetWriter('imex_datasets/spe_10_case_2/spe_10_case_2.dat', np.array([1,1,1]), np.array([1,1,1]), por, perm)
+lenght = (lu.number_elements/lu.coarsening)*lu.length_elements
+new_dataset = DatasetWriter('imex_datasets/spe_10_case_2/spe_10_case_2.dat', lu.coarsening, lenght, por, perm)
 
 ############### RUN IMPRESS ###############
 #mesh = impress(mesh_file = 'mesh/10.h5m', dim = 3)

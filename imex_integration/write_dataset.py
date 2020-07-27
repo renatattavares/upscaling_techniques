@@ -7,6 +7,10 @@ class DatasetWriter:
 
     def __init__(self, original_dataset, coarsening, length_elements, effective_porosity, effective_permeability):
 
+        print('\n##### Generating dataset file #####')
+
+        np.set_printoptions(floatmode = 'fixed')
+        np.set_printoptions(suppress = 'True')
         self.line = '\n'
         self.separator = '********************************************************************************'
 
@@ -18,15 +22,21 @@ class DatasetWriter:
         with open('imex_datasets/coarse_model.dat', 'w') as new:
             pass
 
+        print('Writing dataset heading...')
         self.write_heading(original_dataset)
+        print('Writing dataset mesh settings...')
         self.write_mesh_settings(coarsening, length_elements)
+        print('Writing dataset effective porosity...')
         self.write_effective_porosity(effective_porosity)
+        print('Writing rock compressibility and reference pressure...')
+        self.write_content(self.cpor)
+        self.write_content(self.prpor)
+        print('Writing dataset effective permeability...')
         self.write_effective_permeability(effective_permeability)
+        print('Writting model settings...')
+        self.write_content(self.model)
 
     def get_default_settings(self, original_dataset):
-        '''
-        Default settings are *CPOR (1 linha), *PRPOR (1 linha), *MODEL *OILWATER (até o fim do arquivo)
-        '''
 
         cpor = '*CPOR'
         prpor = '*PRPOR'
@@ -53,7 +63,6 @@ class DatasetWriter:
         heading.append(heading_token)
         heading.append(self.line)
         heading.append(self.separator)
-
         self.write_content(heading)
 
     def write_mesh_settings(self, coarsening, length):
@@ -67,7 +76,6 @@ class DatasetWriter:
             values_line = values_line + ' ' + value
 
         values_line = grid_token + values_line
-
         mesh_settings.append(values_line)
         mesh_settings.append(self.line)
         mesh_settings.append('*KDIR *KDOWN')
@@ -78,8 +86,6 @@ class DatasetWriter:
             mesh_settings.append(self.line)
 
         mesh_settings.append('*DEPTH 1 1 1 12000.')
-        print(mesh_settings)
-
         self.write_content(mesh_settings)
 
     def write_effective_porosity(self, effective_porosity):
@@ -88,14 +94,11 @@ class DatasetWriter:
         porosity_card = []
         porosity_card.append(porosity_token)
         porosity_card.append(self.line)
+        ep = np.reshape(effective_porosity, newshape = (int(len(effective_porosity)/5), 5))
 
-        effective_porosity = np.reshape(effective_porosity, newshape = (int(len(effective_porosity)/5), 5))
-        effective_porosity = effective_porosity.astype(str)
-
-        for line in effective_porosity:
-            values_list = list(line)
-            values = ' '.join(values_list)
-            porosity_card.append(values)
+        for line in ep:
+            str_line = np.array2string(line).replace('[', '').replace(']', '')
+            porosity_card.append(str_line)
             porosity_card.append(self.line)
 
         self.write_content(porosity_card)
@@ -110,12 +113,10 @@ class DatasetWriter:
             permeability_card.append(string)
             permeability_card.append(self.line)
             ep = np.reshape(effective_permeability[:,dir], newshape = (int(len(effective_permeability[:,dir])/5), 5))
-            ep = ep.astype(str)
 
             for line in ep:
-                values_list = list(line)
-                values = ' '.join(values_list)
-                permeability_card.append(values)
+                str_line = np.array2string(line).replace('[', '').replace(']', '')
+                permeability_card.append(str_line)
                 permeability_card.append(self.line)
 
             self.write_content(permeability_card)
