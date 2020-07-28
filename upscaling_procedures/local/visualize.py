@@ -1,3 +1,7 @@
+"""
+Implementation of features to visualize coarse and fine model
+"""
+
 import yaml
 import numpy as np
 from imex_integration.mesh_constructor import MeshConstructor

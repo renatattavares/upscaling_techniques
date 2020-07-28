@@ -1,9 +1,9 @@
 import yaml
 import numpy as np
 from pymoab import core, types, rng
-from imex_integration.refinement import Refinement
+from imex_integration.refinement import MeshRefinement
 
-class MeshConstructor(Refinement):
+class MeshConstructor(MeshRefinement):
 
     def __init__(self, number_elements, length_elements, mesh_file):
 

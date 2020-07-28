@@ -7,21 +7,30 @@ import numpy as np
 import multiprocessing as mp
 from imex_integration.read_dataset import read_dataset
 from upscaling_procedures.local.visualize import Visualize
+from upscaling_procedures.local.refinement import UpscalingRefinement
 from upscaling_procedures.local.local_upscaling import LocalUpscaling
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 
-class ParallelLocalUpscaling(LocalUpscaling, Visualize):
+class ParallelLocalUpscaling(LocalUpscaling, Visualize, UpscalingRefinement):
 
     def __init__(self, mesh_file = None, dataset = None):
 
         self.initial_time = time.time()
 
         super().__init__(mesh_file, dataset)
+        # Check is refinement is required
+        refine = self.check_if_refinement_is_required()
+
+        if refine is True:
+            self.dont_upscale = self.identify_coarse_volumes_in_refinement_regions() # These coarse volumes shouldn't be upscaled
+        else:
+            self.dont_upscale = np.array([])
+
         # Upscale in parallel
         self.distribute_data()
         self.create_processes()
 
-        print("\nThe upscaling lasted {0}s".format(self.final_time-self.initial_time))
+        #print("\nThe upscaling lasted {0}s".format(self.final_time-self.initial_time))
 
     def distribute_data(self):
 
@@ -30,6 +39,12 @@ class ParallelLocalUpscaling(LocalUpscaling, Visualize):
         rest = self.number_coarse_volumes % core_number
         distribution = []
         coarse_volumes = np.arange(self.number_coarse_volumes)
+
+        if self.dont_upscale.size is not 0:
+            inter, comm1, comm2 = np.intersect1d(coarse_volumes, self.dont_upscale, return_indices = True)
+            coarse_volumes = np.delete(coarse_volumes, comm1)
+        else:
+            pass
 
         for i in range(core_number):
             if i is core_number-1:

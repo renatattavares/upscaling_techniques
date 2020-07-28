@@ -2,7 +2,7 @@ import yaml
 import numpy as np
 from pymoab import core, types, rng
 
-class Refinement():
+class MeshRefinement:
 
     def check_if_refinement_is_required(self, refinement_file = 'refinement.yml'):
 
