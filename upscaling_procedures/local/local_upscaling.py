@@ -32,7 +32,7 @@ class LocalUpscaling(LocalProblems):
         for cv in range(self.number_coarse_volumes):
             print('Upscaling of local problem {}'.format(cv))
             self.coarse_volume = cv
-            general_transmissibility = self.assembly_local_problem()
+            general_transmissibility = self.assembly_local_problem(cv)
             effective_permeability = []
             total_volume = volume*self.number_volumes_local_problem
             global_ids_volumes = self.coarse.elements[cv].volumes.father_id[:]
@@ -42,7 +42,7 @@ class LocalUpscaling(LocalProblems):
             for direction in self.direction_string:
                 #print('in {} direction'.format(direction))
                 self.direction = direction
-                transmissibility, source, local_wall = self.set_boundary_conditions(general_transmissibility)
+                transmissibility, source, local_wall = self.set_boundary_conditions(general_transmissibility, cv)
                 pressures = self.solver(transmissibility, source)
 
                 direction_number = self.directions_numbers.get(direction)

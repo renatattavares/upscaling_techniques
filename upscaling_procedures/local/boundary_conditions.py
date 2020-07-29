@@ -5,10 +5,7 @@ from upscaling_procedures.local.quick_preprocessor import QuickPreprocessor
 
 class BoundaryConditions(QuickPreprocessor):
 
-    def __init__(self, boundary_condition_type):
-        self.boundary_condition_type = boundary_condition_type
-
-    def set_boundary_conditions(self, general_transmissibility):
+    def set_boundary_conditions(self, general_transmissibility, coarse_volume):
         """
         Indicates which function must be executed to set boundary conditions acording to the option informed by the user.
         """
@@ -20,18 +17,18 @@ class BoundaryConditions(QuickPreprocessor):
             }
 
         self.check_coarse_face()
-
+        coarse_volume = coarse_volume
         general_transmissibility = general_transmissibility
-        transmissibility, source, correct_volumes_group_1 = self.boundary_conditions_dictionary.get(self.boundary_condition_type, "\nprint('Invalid boundary condition')")(general_transmissibility) # Execute the correct boundary condition function
+        transmissibility, source, correct_volumes_group_1 = self.boundary_conditions_dictionary.get(self.boundary_condition_type, "\nprint('Invalid boundary condition')")(general_transmissibility, coarse_volume) # Execute the correct boundary condition function
 
         return transmissibility, source, correct_volumes_group_1
 
-    def fixed_constant_pressure(self, general_transmissibility):
+    def fixed_constant_pressure(self, general_transmissibility, coarse_volume):
         """
         Function to apply fixed constant pressure boundary condition, it returns a transmissibility and a source/sink matrix modified.
         """
         #print('Setting boundary conditions of local problem {}'.format(self.coarse_volume))
-        correct_volumes_group_1, correct_volumes_group_2 = self.identify_top_bottom_volumes()
+        correct_volumes_group_1, correct_volumes_group_2 = self.identify_top_bottom_volumes(coarse_volume)
         transmissibility = copy.deepcopy(general_transmissibility)
         volumes_group_1 = correct_volumes_group_1
         volumes_group_2 = correct_volumes_group_2

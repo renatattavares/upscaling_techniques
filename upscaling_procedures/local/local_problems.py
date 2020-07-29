@@ -109,14 +109,14 @@ class LocalProblems(Assembly, BoundaryConditions):
         for coarse_volume in range(self.number_coarse_volumes):
             print('\nSolving local problem {}'.format(coarse_volume))
             self.coarse_volume = coarse_volume
-            general_transmissibility = self.assembly_local_problem()
+            general_transmissibility = self.assembly_local_problem(coarse_volume)
             p = []
             w = []
 
             for direction in self.direction_string:
                 print('In {} direction'.format(direction))
                 self.direction = direction
-                transmissibility, source, correct_volumes_group_1 = self.set_boundary_conditions(general_transmissibility)
+                transmissibility, source, correct_volumes_group_1 = self.set_boundary_conditions(general_transmissibility, coarse_volume)
                 p.append(self.solver(transmissibility, source))
                 w.append(correct_volumes_group_1)
 

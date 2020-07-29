@@ -18,7 +18,7 @@ class QuickPreprocessor:
 
         print('\nMesh informations accessed')
 
-    def identify_top_bottom_volumes(self):
+    def identify_top_bottom_volumes(self, coarse_volume):
 
         direction = self.directions_dictionary.get(self.direction)
         direction_number = self.directions_numbers.get(self.direction)
@@ -26,17 +26,17 @@ class QuickPreprocessor:
         correct_volumes_group_1 = np.zeros((1, self.number_faces_coarse_face[direction_number]), dtype = int)
         correct_volumes_group_2 = np.zeros((1, self.number_faces_coarse_face[direction_number]), dtype = int)
 
-        boundary_faces = self.coarse.elements[self.coarse_volume].faces.boundary # Local IDs of boundary faces of a coarse volume
-        global_ids_faces = self.coarse.elements[self.coarse_volume].faces.global_id[boundary_faces]
+        boundary_faces = self.coarse.elements[coarse_volume].faces.boundary # Local IDs of boundary faces of a coarse volume
+        global_ids_faces = self.coarse.elements[coarse_volume].faces.global_id[boundary_faces]
         parallel_direction = self.mesh.parallel_direction[global_ids_faces]
         index_faces_direction = np.isin(parallel_direction, direction_number)
         index_faces_direction = np.where(index_faces_direction == True)[0]
         correct_faces = boundary_faces[index_faces_direction]
 
         # Separate faces in two groups
-        global_ids_correct_faces = self.coarse.elements[self.coarse_volume].faces.global_id[correct_faces]
-        interface_coarse_face_id = self.coarse.iface_neighbors(self.coarse_volume)[1]
-        exception = self.coarse.iface_neighbors(self.coarse_volume)[0]
+        global_ids_correct_faces = self.coarse.elements[coarse_volume].faces.global_id[correct_faces]
+        interface_coarse_face_id = self.coarse.iface_neighbors(coarse_volume)[1]
+        exception = self.coarse.iface_neighbors(coarse_volume)[0]
 
         for j in range(len(interface_coarse_face_id)):
             interface_faces = self.coarse.interfaces_faces[int(interface_coarse_face_id[j])]
@@ -49,14 +49,14 @@ class QuickPreprocessor:
         index = np.isin(global_ids_correct_faces, group_1, assume_unique = False, invert = True)
         group_2 = global_ids_correct_faces[index]
 
-        global_ids_faces = self.coarse.elements[self.coarse_volume].faces.global_id[:]
+        global_ids_faces = self.coarse.elements[coarse_volume].faces.global_id[:]
         index_group_1 = np.isin(global_ids_faces, group_1)
         index_group_2 = np.isin(global_ids_faces, group_2)
         local_ids_group_1 = np.where(index_group_1 == True)[0]
         local_ids_group_2 = np.where(index_group_2 == True)[0]
 
-        correct_volumes_group_1 = np.unique( self.coarse.elements[self.coarse_volume].faces.bridge_adjacencies(local_ids_group_1, 2, 3).flatten())
-        correct_volumes_group_2 = np.unique( self.coarse.elements[self.coarse_volume].faces.bridge_adjacencies(local_ids_group_2, 2, 3).flatten())
+        correct_volumes_group_1 = np.unique( self.coarse.elements[coarse_volume].faces.bridge_adjacencies(local_ids_group_1, 2, 3).flatten())
+        correct_volumes_group_2 = np.unique( self.coarse.elements[coarse_volume].faces.bridge_adjacencies(local_ids_group_2, 2, 3).flatten())
 
         return correct_volumes_group_1, correct_volumes_group_2
 
@@ -100,11 +100,8 @@ class QuickPreprocessor:
         self.number_faces_coarse_face = np.array([], dtype = int)
 
         self.number_faces_coarse_face = np.append(self.number_faces_coarse_face,  int((self.number_elements[1]/self.ny)*(self.number_elements[2]/self.nz)))
-
         self.number_faces_coarse_face = np.append(self.number_faces_coarse_face, int((self.number_elements[0]/self.nx)*(self.number_elements[2]/self.nz)))
-
         self.number_faces_coarse_face = np.append(self.number_faces_coarse_face, int((self.number_elements[0]/self.ny)*(self.number_elements[1]/self.ny)))
-
 
     def center_distance_walls(self):
 

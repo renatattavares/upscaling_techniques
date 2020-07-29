@@ -27,8 +27,8 @@ lu = ParallelLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
 
 ############### WRITE DATASET ###############
 #new_dataset = DatasetWriter('imex_datasets/spe_10_case_2/spe_10_case_2.dat', np.array([1,1,1]), np.array([1,1,1]), por, perm)
-#lenght = (lu.number_elements/lu.coarsening)*lu.length_elements
-#new_dataset = DatasetWriter('imex_datasets/spe_10_case_2/spe_10_case_2.dat', lu.coarsening, lenght, por, perm)
+#length = (lu.number_elements/lu.coarsening)*lu.length_elements
+#new_dataset = DatasetWriter('imex_datasets/spe_10_case_2/spe_10_case_2.dat', lu.coarsening, length, por, perm)
 
 ############### RUN IMPRESS ###############
 #mesh = impress(mesh_file = 'mesh/10.h5m', dim = 3)

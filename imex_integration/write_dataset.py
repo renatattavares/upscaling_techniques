@@ -78,7 +78,7 @@ class DatasetWriter:
         values_line = grid_token + values_line
         mesh_settings.append(values_line)
         mesh_settings.append(self.line)
-        mesh_settings.append('*KDIR *KDOWN')
+        mesh_settings.append('*KDIR *DOWN')
         mesh_settings.append(self.line)
 
         for value, token in zip(length.astype(str), length_token):

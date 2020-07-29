@@ -57,9 +57,8 @@ class ParallelLocalUpscaling(LocalUpscaling, Visualize, UpscalingRefinement):
     def upscale_permeability_porosity(self, cv):
 
         print('Upscaling of local problem {}'.format(cv))
-        self.coarse_volume = cv
         volume = self.length_elements[0]*self.length_elements[1]*self.length_elements[2]
-        general_transmissibility = self.assembly_local_problem()
+        general_transmissibility = self.assembly_local_problem(cv)
         info = []
         total_volume = volume*self.number_volumes_local_problem
         global_ids_volumes = self.coarse.elements[cv].volumes.father_id[:]
@@ -69,7 +68,7 @@ class ParallelLocalUpscaling(LocalUpscaling, Visualize, UpscalingRefinement):
         for direction in self.direction_string:
             #print('in {} direction'.format(direction))
             self.direction = direction
-            transmissibility, source, local_wall = self.set_boundary_conditions(general_transmissibility)
+            transmissibility, source, local_wall = self.set_boundary_conditions(general_transmissibility, cv)
             pressures = self.solver(transmissibility, source)
 
             direction_number = self.directions_numbers.get(direction)
