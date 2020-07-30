@@ -117,6 +117,8 @@ class LocalProblems(Assembly, BoundaryConditions):
                 print('In {} direction'.format(direction))
                 self.direction = direction
                 transmissibility, source, correct_volumes_group_1 = self.set_boundary_conditions(general_transmissibility, coarse_volume)
+                self.transmissibility = transmissibility
+                self.source = source
                 p.append(self.solver(transmissibility, source))
                 w.append(correct_volumes_group_1)
 
