@@ -32,7 +32,6 @@ class Assembly:
         """
         Assembly of local problems to generate the transmissibility matrix
         """
-
         #print("Assembly of local problem {}".format(i))
         faces_local_ids = self.coarse.elements[coarse_volume].faces.internal # Local IDs from the internal faces from a coarse volume
         equivalent_permeability = self.equivalent_permeability(faces_local_ids, coarse_volume)

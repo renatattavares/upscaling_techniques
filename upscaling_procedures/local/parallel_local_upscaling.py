@@ -30,7 +30,7 @@ class ParallelLocalUpscaling(LocalUpscaling, Visualize, UpscalingRefinement):
         self.distribute_data()
         self.create_processes()
 
-        #print("\nThe upscaling lasted {0}s".format(self.final_time-self.initial_time))
+        print("\nThe upscaling lasted {0}s".format(self.final_time-self.initial_time))
 
     def distribute_data(self):
 
