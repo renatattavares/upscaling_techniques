@@ -5,11 +5,10 @@ import time
 import numpy as np
 from upscaling_procedures.local.local_problems import LocalProblems
 from upscaling_procedures.extended_local.extended_assembly import ExtendedAssembly
-from upscaling_procedures.extended_local.extended_visualize import ExtendedVisualize
 from upscaling_procedures.extended_local.extended_boundary_conditions import ExtendedBoundaryConditions
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 
-class ExtendedLocalProblems(LocalProblems, ExtendedAssembly, ExtendedBoundaryConditions, ExtendedVisualize):
+class ExtendedLocalProblems(LocalProblems, ExtendedAssembly, ExtendedBoundaryConditions):
 
     def __init__(self, mesh_file = None, dataset = None):
         initial_time = time.time()
@@ -39,7 +38,7 @@ class ExtendedLocalProblems(LocalProblems, ExtendedAssembly, ExtendedBoundaryCon
         self.check_parallel_direction()
         self.get_mesh_informations(coarse_config()) # Remember number_volumes_local_problem must be corrected (calculate it for each problem)
 
-        self.solve_extended_local_problems()
+        #self.solve_extended_local_problems()
 
 
     def volumes_extended_local_problem(self, coarse_volume):
