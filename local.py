@@ -20,14 +20,17 @@ from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as im
 #lu = LocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
 
 ############### RUN PARALLEL LOCAL UPSCALING ###############
-#lu = ParallelLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
+lu = ParallelLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
 #lu = ParallelLocalUpscaling(mesh_file = None, dataset ='imex_datasets/spe_10_case_2/spe_10_case_2.dat')
+
+
+
 #por, perm = lu.export_info()
 
 ############### RUN PARALLEL EXTENDED LOCAL UPSCALING ###############
 #elu = ExtendedLocalProblems(mesh_file = 'mesh/20.h5m', dataset = None)
 #elu = ExtendedLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
-elu = ParallelExtendedLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
+#elu = ParallelExtendedLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
 
 ############## READ DATASET ###############
 #por, perm, number_elements, length_elements  = read_dataset('imex_datasets/spe_10_case_2/spe_10_case_2.dat', 'mesh1.h5m')
@@ -35,8 +38,8 @@ elu = ParallelExtendedLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
 
 ############### WRITE DATASET ###############
 #new_dataset = DatasetWriter('imex_datasets/spe_10_case_2/spe_10_case_2.dat', np.array([1,1,1]), np.array([1,1,1]), por, perm)
-#length = (lu.number_elements/lu.coarsening)*lu.length_elements
-#new_dataset = DatasetWriter('imex_datasets/spe_10_case_2/spe_10_case_2.dat', lu.coarsening, length, por, perm)
+# length = (lu.number_elements/lu.coarsening)*lu.length_elements
+# new_dataset = DatasetWriter('imex_datasets/spe_10_case_2/spe_10_case_2.dat', lu.coarsening, length, por, perm)
 
 ############### RUN IMPRESS ###############
 #mesh = impress(mesh_file = 'mesh/20.h5m', dim = 3)

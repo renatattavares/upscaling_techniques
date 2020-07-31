@@ -2,10 +2,11 @@
 Module to rewrite specific keywords from IMEX data set after collecting upscaling informations of permeability, porosity and primal mesh
 """
 import numpy as np
+from imex_integration.refinement import MeshRefinement
 
-class DatasetWriter:
+class DatasetWriter(MeshRefinement):
 
-    def __init__(self, original_dataset, coarsening, length_elements, effective_porosity, effective_permeability):
+    def write_dataset(self, original_dataset, coarsening, length_elements, effective_porosity, effective_permeability, refine):
 
         print('\n##### Generating dataset file #####')
 
@@ -26,6 +27,11 @@ class DatasetWriter:
         self.write_heading(original_dataset)
         print('Writing dataset mesh settings...')
         self.write_mesh_settings(coarsening, length_elements)
+
+        if refine is True:
+            perm_refined_volumes, por_refined_volumes = self.export_info_refined_volumes(self)
+            print('Writing mesh refinement settings...')
+
         print('Writing dataset effective porosity...')
         self.write_effective_porosity(effective_porosity)
         print('Writing rock compressibility and reference pressure...')

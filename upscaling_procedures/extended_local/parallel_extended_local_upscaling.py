@@ -6,25 +6,24 @@ import yaml
 import numpy as np
 import multiprocessing as mp
 from imex_integration.read_dataset import read_dataset
+from upscaling_procedures.local.refinement import UpscalingRefinement
 from upscaling_procedures.local.parallel_local_upscaling import ParallelLocalUpscaling
 from upscaling_procedures.extended_local.extended_local_upscaling import ExtendedLocalUpscaling
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 
-class ParallelExtendedLocalUpscaling(ExtendedLocalUpscaling):
+class ParallelExtendedLocalUpscaling(ExtendedLocalUpscaling, UpscalingRefinement):
 
     def __init__(self, mesh_file = None, dataset = None):
 
         super().__init__(mesh_file, dataset)
 
-        # # Check is refinement is required
-        # refine = self.check_if_refinement_is_required()
-        #
-        # if refine is True:
-        #     self.dont_upscale = self.identify_coarse_volumes_in_refinement_regions() # These coarse volumes shouldn't be upscaled
-        # else:
-        #     self.dont_upscale = np.array([])
+        # Check is refinement is required
+        refine = self.check_if_refinement_is_required()
 
-        self.dont_upscale = np.array([])
+        if refine is True:
+            self.dont_upscale = self.identify_coarse_volumes_in_refinement_regions() # These coarse volumes shouldn't be upscaled
+        else:
+            self.dont_upscale = np.array([])
 
         # Upscale in parallel
         self.distribute_data()

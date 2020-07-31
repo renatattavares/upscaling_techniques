@@ -27,7 +27,7 @@ class FineScaleMeshMS(FineScaleMesh):
         super().__init__(mesh_file, dim, load = load)
         print("Creating Coarse Grid")
         self.coarse = MultiscaleCoarseGrid(self, var_config, load = load)
-        self.enhance_entities()
+        #self.enhance_entities()
 
     def __getitem__ (self, key):
         if not isinstance(key, int):

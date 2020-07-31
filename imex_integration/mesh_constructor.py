@@ -10,35 +10,46 @@ class MeshConstructor(MeshRefinement):
         print('\n##### Generating mesh file #####')
         self.mesh_file = mesh_file
         self.mbcore = core.Core() # MOAB Core -> Mesh Management
-        refine = self.check_if_refinement_is_required()
+        #refine = self.check_if_refinement_is_required()
 
-        if refine is False: # Refinement is not required
-            print('\nCreating vertices coordinates...')
-            self.coords = self.create_vertices_coords(number_elements, length_elements, np.array([0,0,0]))
-            print('Creating mesh connectivities...')
-            self.mesh_connectivity = self.create_mesh_connectivity(number_elements, length_elements, self.coords) # Indexes of vertices coords that composes an element
-            print("Creating elements' handles...")
-            self.elements_handles = self.create_elements_handles(self.mesh_connectivity, self.coords)
-            print('Writing file...')
-            self.mbcore.write_file(self.mesh_file)
-            print('\n##### Mesh file created #####')
+        print('\nCreating vertices coordinates...')
+        self.coords = self.create_vertices_coords(number_elements, length_elements, np.array([0,0,0]))
+        print('Creating mesh connectivities...')
+        self.mesh_connectivity = self.create_mesh_connectivity(number_elements, length_elements, self.coords) # Indexes of vertices coords that composes an element
+        print("Creating elements' handles...")
+        self.elements_handles = self.create_elements_handles(self.mesh_connectivity, self.coords)
+        print('Writing file...')
+        self.mbcore.write_file(self.mesh_file)
+        print('\n##### Mesh file created #####')
 
-        else: # Refinement is required
-            print('\nCreating vertices coordinates...')
-            self.coords = self.create_vertices_coords(number_elements, length_elements, np.array([0,0,0]))
-            print('Creating mesh connectivities...')
-            self.mesh_connectivity = self.create_mesh_connectivity(number_elements, length_elements, self.coords) # Indexes of vertices coords that composes an element
-            self.read_refinement_info()
-            print('Starting refinement step...\n')
-            self.refine_regions()
-            coords = np.reshape(self.coords, newshape = (int(len(self.coords)/3), 3))
-            print('Rewriting mesh connectivity...')
-            new_mesh_connectivity = self.rewrite_mesh_connectivity(self.mesh_connectivity, coords, self.new_coords)
-            print("Creating elements' handles...")
-            self.handles = self.create_elements_handles(new_mesh_connectivity, self.new_coords.flatten())
-            print('Writing file...')
-            self.mbcore.write_file(self.mesh_file)
-            print('\n##### Mesh file created #####')
+        # if refine is False: # Refinement is not required
+        #     print('\nCreating vertices coordinates...')
+        #     self.coords = self.create_vertices_coords(number_elements, length_elements, np.array([0,0,0]))
+        #     print('Creating mesh connectivities...')
+        #     self.mesh_connectivity = self.create_mesh_connectivity(number_elements, length_elements, self.coords) # Indexes of vertices coords that composes an element
+        #     print("Creating elements' handles...")
+        #     self.elements_handles = self.create_elements_handles(self.mesh_connectivity, self.coords)
+        #     print('Writing file...')
+        #     self.mbcore.write_file(self.mesh_file)
+        #     print('\n##### Mesh file created #####')
+        #
+        # else: # Refinement is required
+
+            # print('\nCreating vertices coordinates...')
+            # self.coords = self.create_vertices_coords(number_elements, length_elements, np.array([0,0,0]))
+            # print('Creating mesh connectivities...')
+            # self.mesh_connectivity = self.create_mesh_connectivity(number_elements, length_elements, self.coords) # Indexes of vertices coords that composes an element
+            # self.read_refinement_info()
+            # print('Starting refinement step...\n')
+            # self.refine_regions()
+            # coords = np.reshape(self.coords, newshape = (int(len(self.coords)/3), 3))
+            # print('Rewriting mesh connectivity...')
+            # new_mesh_connectivity = self.rewrite_mesh_connectivity(self.mesh_connectivity, coords, self.new_coords)
+            # print("Creating elements' handles...")
+            # self.handles = self.create_elements_handles(new_mesh_connectivity, self.new_coords.flatten())
+            # print('Writing file...')
+            # self.mbcore.write_file(self.mesh_file)
+            # print('\n##### Mesh file created #####')
 
     def create_vertices_coords(self, number_elements, length_elements, mesh_origin):
 
