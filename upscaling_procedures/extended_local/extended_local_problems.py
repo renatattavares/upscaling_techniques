@@ -3,6 +3,7 @@ Module for treatment of extended local problems to apply local upscaling techniq
 """
 import time
 import numpy as np
+from imex_integration.read_dataset import read_dataset
 from upscaling_procedures.local.local_problems import LocalProblems
 from upscaling_procedures.extended_local.extended_assembly import ExtendedAssembly
 from upscaling_procedures.extended_local.extended_boundary_conditions import ExtendedBoundaryConditions

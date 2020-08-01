@@ -6,7 +6,7 @@ from imex_integration.refinement import MeshRefinement
 
 class DatasetWriter(MeshRefinement):
 
-    def write_dataset(self, original_dataset, coarsening, length_elements, effective_porosity, effective_permeability, refine):
+    def __init__(self, original_dataset, coarsening, length_elements, effective_porosity, effective_permeability, refine):
 
         print('\n##### Generating dataset file #####')
 

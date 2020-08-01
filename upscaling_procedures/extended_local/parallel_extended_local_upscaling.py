@@ -6,12 +6,13 @@ import yaml
 import numpy as np
 import multiprocessing as mp
 from imex_integration.read_dataset import read_dataset
+from upscaling_procedures.local.visualize import Visualize
 from upscaling_procedures.local.refinement import UpscalingRefinement
 from upscaling_procedures.local.parallel_local_upscaling import ParallelLocalUpscaling
 from upscaling_procedures.extended_local.extended_local_upscaling import ExtendedLocalUpscaling
 from impress.preprocessor.meshHandle.configTools.configClass import coarseningInit as coarse_config
 
-class ParallelExtendedLocalUpscaling(ExtendedLocalUpscaling, UpscalingRefinement):
+class ParallelExtendedLocalUpscaling(ExtendedLocalUpscaling, UpscalingRefinement, Visualize):
 
     def __init__(self, mesh_file = None, dataset = None):
 
