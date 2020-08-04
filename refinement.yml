@@ -1,6 +1,6 @@
 # Refinement informations
 
-refine: False
+refine: True
 
 # region0:
 #   length: [0.5,0.5,0.5]
@@ -14,45 +14,45 @@ refine: False
 #   8: [1,1,1]
 
 region0: # region + region number -> tag should be used to indicate a new region to be refinement
-  length: [0.5,0.5,0.5]
-  1: [0,0,0] # Coords of the boundaries of region that will be refined
-  2: [4,0,0]
-  3: [0,0,4]
-  4: [4,0,4]
-  5: [0,20,0]
-  6: [4,20,0]
-  7: [0,20,4]
-  8: [4,20,4]
+ length: [0.5,0.5,0.5]
+ 1: [0,0,0] # Coords of the boundaries of region that will be refined
+ 2: [0,50,0]
+ 3: [100,0,0]
+ 4: [100,50,0]
+ 5: [0,0,170]
+ 6: [0,50,170]
+ 7: [100,0,170]
+ 8: [100,50,170]
 
 region1:
  length: [0.5,0.5,0.5]
- 1: [0,0,16] # Coords of the boundaries of region that will be refined
- 2: [4,0,16]
- 3: [0,0,20]
- 4: [4,0,20]
- 5: [0,20,16]
- 6: [4,20,16]
- 7: [0,20,20]
- 8: [4,20,20]
+ 1 : [0,2150,0] # Coords of the boundaries of region that will be refined
+ 2: [0,2200,0]
+ 3: [100,2150,0]
+ 4: [100,2220,0]
+ 5: [0,2150,170]
+ 6: [0,2220,170]
+ 7: [100,2150,170]
+ 8: [100,2200,170]
 
 region2:
  length: [0.5,0.5,0.5]
- 1: [16,0,0] # Coords of the boundaries of region that will be refined
- 2: [20,0,0]
- 3: [16,0,4]
- 4: [20,0,4]
- 5: [16,20,0]
- 6: [20,20,0]
- 7: [16,20,4]
- 8: [20,20,4]
+ 1: [1100,0,0] # Coords of the boundaries of region that will be refined
+ 2: [1100,50,0]
+ 3: [1200,0,0]
+ 4: [1200,50,0]
+ 5: [1100,0,170]
+ 6: [1100,50,170]
+ 7: [1200,0,170]
+ 8: [1200,50,170]
 
 region3:
  length: [0.5,0.5,0.5]
- 1: [16,0,16] # Coords of the boundaries of region that will be refined
- 2: [20,0,16]
- 3: [16,0,20]
- 4: [20,0,20]
- 5: [16,20,16]
- 6: [20,20,16]
- 7: [16,20,20]
- 8: [20,20,20]
+ 1: [1100,2150,0] # Coords of the boundaries of region that will be refined
+ 2: [1100,2200,0]
+ 3: [1200,2150,0]
+ 4: [1200,2200,0]
+ 5: [1100,2150,170]
+ 6: [1100,2200,170]
+ 7: [1200,2150,170]
+ 8: [1200,2200,170]

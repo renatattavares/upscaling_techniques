@@ -19,7 +19,7 @@ class DatasetWriter(MeshRefinement):
         with open(original_dataset, 'r') as old:
             original_dataset = old.readlines()
 
-        self.get_default_settings(original_dataset)
+        self.get_default_settings(original_dataset, info_refined_volumes)
 
         with open('imex_datasets/coarse_model.dat', 'w') as new:
             pass
@@ -28,27 +28,26 @@ class DatasetWriter(MeshRefinement):
         self.write_heading(original_dataset)
         print('Writing dataset mesh settings...')
         self.write_mesh_settings(coarsening, coarse_length)
+        self.write_content(self.cpor)
+        self.write_content(self.prpor)
 
-        if info_refined_volumes.any() != None:
+        if info_refined_volumes is not None:
             print('Writing refinement settings...')
             self.write_refine_card(length_elements, coarse_length, coarsening)
 
-        # print('Writing dataset effective porosity...')
-        # self.write_effective_porosity(effective_porosity)
-        # print('Writing rock compressibility and reference pressure...')
-        # self.write_content(self.cpor)
-        # self.write_content(self.prpor)
-        # print('Writing dataset effective permeability...')
-        # self.write_effective_permeability(effective_permeability)
+        print('Writing dataset effective porosity...')
+        #self.write_effective_porosity(effective_porosity)
+        print('Writing rock compressibility and reference pressure...')
+        print('Writing dataset effective permeability...')
+        #self.write_effective_permeability(effective_permeability)
 
-        # if info_refined_volumes is not None:
-        #     print('Writing refinement settings...')
-        #     self.write_well_perf(coarsening, coarse_length)
+        if info_refined_volumes is not None:
+            self.write_refined_volumes_perm(info_refined_volumes, coarsening)
 
         print('Writting model settings...')
         self.write_content(self.model)
 
-    def get_default_settings(self, original_dataset):
+    def get_default_settings(self, original_dataset, info_refined_volumes):
 
         cpor = '*CPOR'
         prpor = '*PRPOR'
@@ -61,7 +60,10 @@ class DatasetWriter(MeshRefinement):
                 self.prpor = line
             if model in line:
                 index = original_dataset.index(line)
-                self.model = original_dataset[index:]
+                if info_refined_volumes is not None:
+                    self.model = original_dataset[index:index+73]
+                else:
+                    self.model = original_dataset[index:]
 
     def write_heading(self, original_dataset):
 
@@ -137,10 +139,10 @@ class DatasetWriter(MeshRefinement):
 
         refine_token = '*REFINE'
         range_token = '*RANGE'
-        upscaling_ratio = (coarse_length/length_elements).astype(int)
+        self.upscaling_ratio = (coarse_length/length_elements).astype(int)
         refine_card = []
 
-        refine_card.append(refine_token + ' ' + str(upscaling_ratio[0]) + ' ' + str(upscaling_ratio[1]) + ' ' + str(upscaling_ratio[2]))
+        refine_card.append(refine_token + ' ' + str(self.upscaling_ratio[0]) + ' ' + str(self.upscaling_ratio[1]) + ' ' + str(self.upscaling_ratio[2]))
         refine_card.append(self.line)
         refine_card.append(range_token + ' ' + '1 1 1:' + str(coarsening[2]))
         refine_card.append(self.line)
@@ -152,8 +154,80 @@ class DatasetWriter(MeshRefinement):
 
         self.write_content(refine_card)
 
-    def write_well_perf(self):
-        pass
+    def write_refined_volumes_perm(self, info_refined_volumes, coarsening):
+
+        perm_direction_token = np.array(['*PERMI *RG', '*PERMJ *RG', '*PERMK *RG'])
+        perm_refined_volumes = info_refined_volumes[0].flatten()
+        perm_refined_volumes = np.reshape(perm_refined_volumes, newshape = (int(len(perm_refined_volumes)/3),3))
+        direction = np.array([0,1,2])
+        well1 = np.array([1,1,1], dtype = int)
+        well2 = np.array([1,coarsening[1],1], dtype = int)
+        well3 = np.array([coarsening[0],1,1], dtype = int)
+        well4 = np.array([coarsening[0],coarsening[1],1], dtype = int)
+
+        wells1 = []
+        wells2 = []
+        wells3 = []
+        wells4 = []
+
+        for i in range(coarsening[2]):
+            wells1.append(well1 + np.array([0,0,i]))
+            wells2.append(well2 + np.array([0,0,i]))
+            wells3.append(well3 + np.array([0,0,i]))
+            wells4.append(well4 + np.array([0,0,i]))
+
+        perfs = np.array([wells1, wells2, wells3, wells4]).flatten()
+        perfs = np.reshape(perfs, newshape = (int(len(perfs)/3),3))
+        perm_card = []
+
+        for string, dir in zip(perm_direction_token, direction):
+            perm = perm_refined_volumes[:,dir]
+            i = 0
+            for perf in perfs:
+                p = perm[(0+(i*3)):(3+(i*3))]
+                perm_card.append(string + ' ' + np.array2string(perf).replace('[', '').replace(']', '') + ' ' + '*ALL ' + np.array2string(p).replace('[', '').replace(']', ''))
+                perm_card.append(self.line)
+                i += 1
+
+        self.write_content(perm_card)
+
+    def write_refined_volumes_por(self):
+        perm_direction_token = np.array(['*PERMI *RG', '*PERMJ *RG', '*PERMK *RG'])
+        perm_refined_volumes = info_refined_volumes[0].flatten()
+        perm_refined_volumes = np.reshape(perm_refined_volumes, newshape = (int(len(perm_refined_volumes)/3),3))
+        direction = np.array([0,1,2])
+        well1 = np.array([1,1,1], dtype = int)
+        well2 = np.array([1,coarsening[1],1], dtype = int)
+        well3 = np.array([coarsening[0],1,1], dtype = int)
+        well4 = np.array([coarsening[0],coarsening[1],1], dtype = int)
+
+        wells1 = []
+        wells2 = []
+        wells3 = []
+        wells4 = []
+
+        for i in range(coarsening[2]):
+            wells1.append(well1 + np.array([0,0,i]))
+            wells2.append(well2 + np.array([0,0,i]))
+            wells3.append(well3 + np.array([0,0,i]))
+            wells4.append(well4 + np.array([0,0,i]))
+
+        perfs = np.array([wells1, wells2, wells3, wells4]).flatten()
+        perfs = np.reshape(perfs, newshape = (int(len(perfs)/3),3))
+        perm_card = []
+
+        for string, dir in zip(perm_direction_token, direction):
+            perm = perm_refined_volumes[:,dir]
+            i = 0
+            for perf in perfs:
+                p = perm[(0+(i*3)):(3+(i*3))]
+                perm_card.append(string + ' ' + np.array2string(perf).replace('[', '').replace(']', '') + ' ' + '*ALL ' + np.array2string(p).replace('[', '').replace(']', ''))
+                perm_card.append(self.line)
+                i += 1
+
+        self.write_content(perm_card)
+        self.perm = perm_refined_volumes
+
 
     def write_content(self, content):
 
