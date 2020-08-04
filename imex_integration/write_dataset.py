@@ -184,10 +184,11 @@ class DatasetWriter(MeshRefinement):
             perm = perm_refined_volumes[:,dir]
             i = 0
             for perf in perfs:
-                p = perm[(0+(i*3)):(3+(i*3))]
+                p = perm[(0+(i*125)):(125+(i*125))]
                 perm_card.append(string + ' ' + np.array2string(perf).replace('[', '').replace(']', '') + ' ' + '*ALL ' + np.array2string(p).replace('[', '').replace(']', ''))
                 perm_card.append(self.line)
                 i += 1
+            perm_card.append(self.line)
 
         self.write_content(perm_card)
 
@@ -220,14 +221,12 @@ class DatasetWriter(MeshRefinement):
             perm = perm_refined_volumes[:,dir]
             i = 0
             for perf in perfs:
-                p = perm[(0+(i*3)):(3+(i*3))]
+                p = perm[(0+(i*125)):(125+(i*125))]
                 perm_card.append(string + ' ' + np.array2string(perf).replace('[', '').replace(']', '') + ' ' + '*ALL ' + np.array2string(p).replace('[', '').replace(']', ''))
                 perm_card.append(self.line)
                 i += 1
 
         self.write_content(perm_card)
-        self.perm = perm_refined_volumes
-
 
     def write_content(self, content):
 
