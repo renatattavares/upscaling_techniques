@@ -1,0 +1,196 @@
+******************************************************************************
+** spe66599.dat:           3-D HETEROGENEOUS EXAMPLE                        **
+******************************************************************************
+**************************************************************************************
+**                                                                                  **
+**                                                                                  **
+** FILE:    SUPER.DAT - Porosidade variavel                                         **
+**                                                                                  **
+** MODEL: 60x220x85                 SPE 10                3-D HETEROGENEOUS EXAMPLE **
+**                                                                                  **
+**************************************************************************************
+**                                                                                  **
+** Tenth SPE Comparative Solution Project: A Comparison of Upscaling Techniques     **
+** M.A.Christie, SPE, Heriot-Watt University, and M.J. Blunt, SPE, Imperial College **
+** Symposium on Reservoir Simulation, 2001 (SPE 66599). This is 60 x 220 x 85       **
+** heterogeneous Cartesian grid problem with a water injector located at (30,110)   **
+** and 4 producers (This script was based in MXSPE009.DAT file).                    **
+**                                                                                  **
+**************************************************************************************
+** CONTACT: CMG, (403)531-1300; 282-6495 (fax);support@cmgl.ca (Internet)           **
+**************************************************************************************
+
+RESULTS SIMULATOR IMEX
+********************************************************************************
+** I/O Control Section                                                        **
+********************************************************************************
+**FILENAME *OUTPUT 'super2.out'
+**FILENAME *INDEX-OUT 'super2.irf'
+**FILENAME *MAIN-RESULTS-OUT 'super2.mrf'
+**FILENAME *INDEX-IN 'super.irf'
+**FILENAME *MAIN-RESULTS-IN 'super.mrf'
+
+**RESTART
+
+*TITLE1
+'Tenth SPE Comparative Solution Project'
+*TITLE2
+'A Comparison of Upscaling Techniques'
+*TITLE3
+'M.A. Christie, M.J. Blunt, SPE Res Sim Symp, Houston, Texas, 2001'
+
+*NOLIST
+*INUNIT *FIELD                  ** Field units are used for both input and output.
+*WPRN *WELL 0
+*WPRN *GRID 0
+*OUTPRN *GRID *PRES *SO *SW
+*OUTPRN *TABLES *NONE
+*WSRF *GRID *TIME
+*WSRF *WELL *TIME
+*OUTSRF *GRID *SO *SW *PRES
+
+** RESTART FILE
+*WRST 10
+
+********************************************************************************
+**         Reservoir Description Section                                      **
+********************************************************************************
+*GRID *CART 12 44 17
+*KDIR *DOWN
+*DI *CON 100.0
+*DJ *CON 50.0
+*DK *CON 10.0
+*DEPTH 1 1 1 12000.
+*REFINE 5 5 5
+*RANGE 1 1 1:17
+*RANGE 1 44 1:17
+*RANGE 12 1 1:17
+*RANGE 12 44 1:17
+*MODEL *OILWATER
+** Solve two phase - two equations.
+********************************************************************************
+** Component Property Section                                                 **
+********************************************************************************
+*PVT
+  ** p      rs      bo      eg       vo       vg
+    300.0   0.0    1.05  5.615000   2.85     0.01
+**  800.0   0.0    1.02  5.615001   2.99     0.01
+**  8000    0.0    1.01  5.615001   3.0 0    0.01
+*DENSITY *OIL 53
+*GRAVITY *GAS 0.92
+*DENSITY *WATER 64
+*CO    1.0E-6
+*BWI   1.01
+*CW    3.1E-6
+*REFPW 3600
+*VWI   0.3
+*CVW   0.0
+
+*ROCKFLUID
+********************************************************************************
+** Rock-Fluid Property Section						      **
+********************************************************************************
+*RPT 1
+*SWT 				** Water-oil relative permeability table
+** sw    krw     krow
+0.200   0.0000  1.0000
+0.250   0.0069  0.8403
+0.300   0.0278  0.6944
+0.350   0.0625  0.5625
+0.400   0.1111  0.4444
+0.450   0.1736  0.3403
+0.500   0.2500  0.2500
+0.550   0.3403  0.1736
+0.600   0.4444  0.1111
+0.650   0.5625  0.0625
+0.700   0.6944  0.0278
+0.750   0.8403  0.0069
+0.800   1.0000  0.0000
+
+*INITIAL
+********************************************************************************
+** Initial Conditions Section                                                 **
+********************************************************************************
+*VERTICAL *BLOCK_CENTER *WATER_OIL  ** Use vertical equilibrium calculation.
+*PB *CON    300.0                   ** buble point pressure
+*REFDEPTH   12000.                  ** Give a reference depth and
+*REFPRES    6000.                   ** associated pressure.
+*DWOC       13950.                  ** Depth to water-oil contact
+*DATUMDEPTH 12000.
+
+*NUMERICAL
+********************************************************************************
+** Numerical Control Section                                                  **
+********************************************************************************
+*DTMAX 60.
+*MAXSTEPS 5000
+*NORM *PRESS 500.
+*NORM *SATUR 0.04
+*MAXCHANGE *SATUR 0.10
+*PRECC 0.005
+
+*RUN
+********************************************************************************
+** Well and Recurrent Data Section                                            **
+********************************************************************************
+*DATE 1980 01 01
+*DTWELL 1.00
+
+*AIMWELL *WELLNN
+
+*GROUP 'ALL-WELLS'   *ATTACHTO 'FIELD'
+*WELL 1 'Injector'   *VERT 30 110 *ATTACHTO 'ALL-WELLS'
+*WELL 2 'Producer1'  *VERT 1  1   *ATTACHTO 'ALL-WELLS'
+*WELL 3 'Producer2'  *VERT 1  220 *ATTACHTO 'ALL-WELLS'
+*WELL 4 'Producer3'  *VERT 60 220 *ATTACHTO 'ALL-WELLS'
+*WELL 5 'Producer4'  *VERT 60 1   *ATTACHTO 'ALL-WELLS'
+
+** The minimum flowing bottomhole pressure was set to 1000 psia for
+** all producers with a reference depth of 9110 feet for this pressue
+** in all wells. Therefore, they are adjusted accordingly in IMEX.
+** The geofac=0.355 is used for all wells to match the effective
+** well radius (0.2*DX = 60 feet) specified in the paper SPE 29110
+
+*INJECTOR 1
+*INCOMP *WATER
+*OPERATE *MAX *BHW 5000.0
+*OPERATE *MAX *BHP 10000.0
+
+** Well geometry for the water injector.
+**           rad geofac wfrac skin
+*GEOMETRY *K 0.5  0.37   1.0   0.0
+
+*PERFV *GEO 1
+** kf     ff
+  1:85     1
+
+*PRODUCER 2
+*OPERATE *MAX *STO 1500.0
+*OPERATE *MIN *BHP 4000.0
+
+*PRODUCER 3
+*OPERATE *MAX *STO 1500.0
+*OPERATE *MIN *BHP 4000.0
+
+*PRODUCER 4
+*OPERATE *MAX *STO 1500.0
+*OPERATE *MIN *BHP 4000.0
+
+*PRODUCER 5
+*OPERATE *MAX *STO 1500.0
+*OPERATE *MIN *BHP 4000.0
+
+** Well geometry for the water injector.
+**           rad geofac wfrac skin
+*GEOMETRY *K 0.5  0.34   1.0   0.0
+
+*PERFV *GEO 2:5
+** kf     ff
+  1:85     1
+
+*TIME 1
+*DTWELL 1.0
+*TIME 50
+*TIME 2000
+*STOP
+

@@ -36,16 +36,6 @@ class Visualize:
 
         coarse_model.core.print()
 
-    #
-    # def print_fine_model(self):
-    #
-    #     perm = self.mesh.permeability[:]
-    #
-    #     self.mesh.permx[:] = perm[:,0]
-    #     self.mesh.permy[:] = perm[:,1]
-    #     self.mesh.permz[:] = perm[:,2]
-    #     self.mesh.core.print()
-
     def export_info(self):
 
         effective_permeability = np.zeros((len(self.mesh.coarse.elements), 3))
@@ -63,3 +53,13 @@ class Visualize:
     def save_info(self):
 
         self.effective_porosity, self.effective_permeability = self.export_info()
+
+        #
+        # def print_fine_model(self):
+        #
+        #     perm = self.mesh.permeability[:]
+        #
+        #     self.mesh.permx[:] = perm[:,0]
+        #     self.mesh.permy[:] = perm[:,1]
+        #     self.mesh.permz[:] = perm[:,2]
+        #     self.mesh.core.print()

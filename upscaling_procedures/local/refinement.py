@@ -51,14 +51,18 @@ class UpscalingRefinement(MeshRefinement):
 
     def export_info_refined_volumes(self):
 
-        perm_refined_volumes = []
-        por_refined_volumes = []
+        if self.dont_upscale.size != 0:
 
-        for coarse_volume in self.dont_upscale:
-            global_ids = self.coarse.elements[coarse_volume].volumes.father_id[:]
-            perm.append(self.mesh.permeability[global_ids])
-            por.append(self.mesh.porosity[global_ids])
+            perm_refined_volumes = []
+            por_refined_volumes = []
 
-        return perm_refined_volumes, por_refined_volumes
+            for coarse_volume in self.dont_upscale:
+                global_ids = self.coarse.elements[coarse_volume].volumes.father_id[:]
+                perm.append(self.mesh.permeability[global_ids])
+                por.append(self.mesh.porosity[global_ids])
 
-    
+            return perm_refined_volumes, por_refined_volumes
+
+        else:
+            print('Refinement was not requested')
+            return None

@@ -6,7 +6,7 @@ from imex_integration.refinement import MeshRefinement
 
 class DatasetWriter(MeshRefinement):
 
-    def __init__(self, original_dataset, coarsening, length_elements, effective_porosity, effective_permeability, refine):
+    def __init__(self, original_dataset, coarsening, number_elements, length_elements, effective_porosity, effective_permeability, info_refined_volumes):
 
         print('\n##### Generating dataset file #####')
 
@@ -14,6 +14,7 @@ class DatasetWriter(MeshRefinement):
         np.set_printoptions(suppress = 'True')
         self.line = '\n'
         self.separator = '********************************************************************************'
+        coarse_length = (number_elements/coarsening)*length_elements
 
         with open(original_dataset, 'r') as old:
             original_dataset = old.readlines()
@@ -26,19 +27,24 @@ class DatasetWriter(MeshRefinement):
         print('Writing dataset heading...')
         self.write_heading(original_dataset)
         print('Writing dataset mesh settings...')
-        self.write_mesh_settings(coarsening, length_elements)
+        self.write_mesh_settings(coarsening, coarse_length)
 
-        if refine is True:
-            perm_refined_volumes, por_refined_volumes = self.export_info_refined_volumes(self)
-            print('Writing mesh refinement settings...')
+        if info_refined_volumes.any() != None:
+            print('Writing refinement settings...')
+            self.write_refine_card(length_elements, coarse_length, coarsening)
 
-        print('Writing dataset effective porosity...')
-        self.write_effective_porosity(effective_porosity)
-        print('Writing rock compressibility and reference pressure...')
-        self.write_content(self.cpor)
-        self.write_content(self.prpor)
-        print('Writing dataset effective permeability...')
-        self.write_effective_permeability(effective_permeability)
+        # print('Writing dataset effective porosity...')
+        # self.write_effective_porosity(effective_porosity)
+        # print('Writing rock compressibility and reference pressure...')
+        # self.write_content(self.cpor)
+        # self.write_content(self.prpor)
+        # print('Writing dataset effective permeability...')
+        # self.write_effective_permeability(effective_permeability)
+
+        # if info_refined_volumes is not None:
+        #     print('Writing refinement settings...')
+        #     self.write_well_perf(coarsening, coarse_length)
+
         print('Writting model settings...')
         self.write_content(self.model)
 
@@ -126,6 +132,28 @@ class DatasetWriter(MeshRefinement):
                 permeability_card.append(self.line)
 
             self.write_content(permeability_card)
+
+    def write_refine_card(self, length_elements, coarse_length, coarsening):
+
+        refine_token = '*REFINE'
+        range_token = '*RANGE'
+        upscaling_ratio = (coarse_length/length_elements).astype(int)
+        refine_card = []
+
+        refine_card.append(refine_token + ' ' + str(upscaling_ratio[0]) + ' ' + str(upscaling_ratio[1]) + ' ' + str(upscaling_ratio[2]))
+        refine_card.append(self.line)
+        refine_card.append(range_token + ' ' + '1 1 1:' + str(coarsening[2]))
+        refine_card.append(self.line)
+        refine_card.append(range_token + ' ' + '1 ' + str(coarsening[1]) + ' 1:' + str(coarsening[2]))
+        refine_card.append(self.line)
+        refine_card.append(range_token + ' ' + str(coarsening[0]) + ' 1 1:' + str(coarsening[2]))
+        refine_card.append(self.line)
+        refine_card.append(range_token + ' ' + str(coarsening[0]) + ' ' + str(coarsening[1]) + ' ' + '1:' + str(coarsening[2]))
+
+        self.write_content(refine_card)
+
+    def write_well_perf(self):
+        pass
 
     def write_content(self, content):
 
