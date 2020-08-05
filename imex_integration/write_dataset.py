@@ -19,17 +19,17 @@ class DatasetWriter(MeshRefinement):
         with open(original_dataset, 'r') as old:
             original_dataset = old.readlines()
 
-        self.get_default_settings(original_dataset, info_refined_volumes)
+        #self.get_default_settings(original_dataset, info_refined_volumes)
 
         with open('imex_datasets/coarse_model.dat', 'w') as new:
             pass
 
         print('Writing dataset heading...')
-        self.write_heading(original_dataset)
+        #self.write_heading(original_dataset)
         print('Writing dataset mesh settings...')
-        self.write_mesh_settings(coarsening, coarse_length)
-        self.write_content(self.cpor)
-        self.write_content(self.prpor)
+        #self.write_mesh_settings(coarsening, coarse_length)
+        #self.write_content(self.cpor)
+        #self.write_content(self.prpor)
 
         if info_refined_volumes is not None:
             print('Writing refinement settings...')
@@ -43,9 +43,10 @@ class DatasetWriter(MeshRefinement):
 
         if info_refined_volumes is not None:
             self.write_refined_volumes_perm(info_refined_volumes, coarsening)
+            self.write_refined_volumes_por(info_refined_volumes, coarsening)
 
         print('Writting model settings...')
-        self.write_content(self.model)
+        #self.write_content(self.model)
 
     def get_default_settings(self, original_dataset, info_refined_volumes):
 
@@ -179,12 +180,13 @@ class DatasetWriter(MeshRefinement):
         perfs = np.array([wells1, wells2, wells3, wells4]).flatten()
         perfs = np.reshape(perfs, newshape = (int(len(perfs)/3),3))
         perm_card = []
+        volumes_number = self.upscaling_ratio[0]*self.upscaling_ratio[1]*self.upscaling_ratio[2]
 
         for string, dir in zip(perm_direction_token, direction):
             perm = perm_refined_volumes[:,dir]
             i = 0
             for perf in perfs:
-                p = perm[(0+(i*125)):(125+(i*125))]
+                p = perm[(0+(i*volumes_number)):(volumes_number+(i*volumes_number))]
                 perm_card.append(string + ' ' + np.array2string(perf).replace('[', '').replace(']', '') + ' ' + '*ALL ' + np.array2string(p).replace('[', '').replace(']', ''))
                 perm_card.append(self.line)
                 i += 1
@@ -192,11 +194,9 @@ class DatasetWriter(MeshRefinement):
 
         self.write_content(perm_card)
 
-    def write_refined_volumes_por(self):
-        perm_direction_token = np.array(['*PERMI *RG', '*PERMJ *RG', '*PERMK *RG'])
-        perm_refined_volumes = info_refined_volumes[0].flatten()
-        perm_refined_volumes = np.reshape(perm_refined_volumes, newshape = (int(len(perm_refined_volumes)/3),3))
-        direction = np.array([0,1,2])
+    def write_refined_volumes_por(self, info_refined_volumes, coarsening):
+        por_token = '*POR *RG'
+        por_refined_volumes = info_refined_volumes[1].flatten()
         well1 = np.array([1,1,1], dtype = int)
         well2 = np.array([1,coarsening[1],1], dtype = int)
         well3 = np.array([coarsening[0],1,1], dtype = int)
@@ -215,18 +215,18 @@ class DatasetWriter(MeshRefinement):
 
         perfs = np.array([wells1, wells2, wells3, wells4]).flatten()
         perfs = np.reshape(perfs, newshape = (int(len(perfs)/3),3))
-        perm_card = []
+        por_card = []
+        volumes_number = self.upscaling_ratio[0]*self.upscaling_ratio[1]*self.upscaling_ratio[2]
 
-        for string, dir in zip(perm_direction_token, direction):
-            perm = perm_refined_volumes[:,dir]
-            i = 0
-            for perf in perfs:
-                p = perm[(0+(i*125)):(125+(i*125))]
-                perm_card.append(string + ' ' + np.array2string(perf).replace('[', '').replace(']', '') + ' ' + '*ALL ' + np.array2string(p).replace('[', '').replace(']', ''))
-                perm_card.append(self.line)
-                i += 1
 
-        self.write_content(perm_card)
+        i = 0
+        for perf in perfs:
+            p = por_refined_volumes[(0+(i*volumes_number)):(volumes_number+(i*volumes_number))]
+            por_card.append(por_token + ' ' + np.array2string(perf).replace('[', '').replace(']', '') + ' ' + '*ALL ' + np.array2string(p).replace('[', '').replace(']', ''))
+            por_card.append(self.line)
+            i += 1
+
+        self.write_content(por_card)
 
     def write_content(self, content):
 
