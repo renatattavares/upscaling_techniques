@@ -5,7 +5,7 @@ Implementation of features to visualize coarse and fine model
 import yaml
 import numpy as np
 from imex_integration.mesh_constructor import MeshConstructor
-from impress.preprocessor.meshHandle.finescaleMesh import FineScaleMesh
+from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as impress
 
 class Visualize:
 
@@ -13,7 +13,7 @@ class Visualize:
 
         fine_number_elements = self.number_elements
         fine_length_elements = self.length_elements
-        self.coarse_number_elements = np.array([], dtype = int)
+        coarse_number_elements = np.array([], dtype = int)
 
         with open('impress/input_cards/coarsening.yml', 'r') as coarsening:
             new_mesh_data = yaml.safe_load(coarsening)
@@ -21,18 +21,18 @@ class Visualize:
         coarsening = new_mesh_data['Simple']
 
         for key in coarsening.keys():
-            self.coarse_number_elements = np.append(self.coarse_number_elements,coarsening[key])
+            coarse_number_elements = np.append(coarse_number_elements,coarsening[key])
 
-        self.coarse_length_elements = (fine_number_elements/self.coarse_number_elements)*fine_length_elements
-        generator = MeshConstructor(self.coarse_number_elements, self.coarse_length_elements, mesh_file)
-        coarse_model = FineScaleMesh(mesh_file)
+        coarse_length_elements = (fine_number_elements/coarse_number_elements)*fine_length_elements
+        generator = MeshConstructor(coarse_number_elements, coarse_length_elements, mesh_file)
+        coarse_model = impress(mesh_file)
 
         por, perm = self.export_info()
 
         coarse_model.kefx[:] =  perm[:,0]
         coarse_model.kefy[:] =  perm[:,1]
         coarse_model.kefz[:] =  perm[:,2]
-        coarse_model.poref[:] =  perm[:,0]
+        coarse_model.poref[:] =  por
 
         coarse_model.core.print()
 

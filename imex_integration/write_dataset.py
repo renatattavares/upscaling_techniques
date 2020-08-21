@@ -218,7 +218,6 @@ class DatasetWriter(MeshRefinement):
         por_card = []
         volumes_number = self.upscaling_ratio[0]*self.upscaling_ratio[1]*self.upscaling_ratio[2]
 
-
         i = 0
         for perf in perfs:
             p = por_refined_volumes[(0+(i*volumes_number)):(volumes_number+(i*volumes_number))]

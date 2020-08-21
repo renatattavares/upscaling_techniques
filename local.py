@@ -21,14 +21,14 @@ from impress.preprocessor.meshHandle.multiscaleMesh import FineScaleMeshMS as im
 
 ############### RUN PARALLEL LOCAL UPSCALING ###############
 #lu = ParallelLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
-lu = ParallelLocalUpscaling(mesh_file = None, dataset ='imex_datasets/spe_10_case_2/spe_10_case_2.dat')
-por, perm = lu.export_info()
-info_refined_volumes = lu.export_info_refined_volumes()
+#lu = ParallelLocalUpscaling(mesh_file = None, dataset ='imex_datasets/spe_10_case_2/spe_10_case_2.dat')
+#por, perm = lu.export_info()
+#info_refined_volumes = lu.export_info_refined_volumes()
 
 ############### RUN PARALLEL EXTENDED LOCAL UPSCALING ###############
 #elu = ExtendedLocalProblems(mesh_file = 'mesh/20.h5m', dataset = None)
 #elu = ExtendedLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
-#elu = ParallelExtendedLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
+elu = ParallelExtendedLocalUpscaling(mesh_file = 'mesh/20.h5m', dataset = None)
 #elu = ParallelExtendedLocalUpscaling(mesh_file = None, dataset = 'imex_datasets/spe_10_case_2/spe_10_case_2.dat')
 #por, perm = elu.export_info()
 #info_refined_volumes = elu.export_info_refined_volumes()
@@ -39,7 +39,7 @@ info_refined_volumes = lu.export_info_refined_volumes()
 #
 # ############### WRITE DATASET ###############
 # new_dataset = DatasetWriter('imex_datasets/spe_10_case_2/spe_10_case_2.dat', np.array([12,44,17]), np.array([60,220,85]), np.array([20,10,2]), por, perm, info_refined_volumes)
-new_dataset = DatasetWriter('imex_datasets/spe_10_case_2/spe_10_case_2.dat', lu.coarsening, lu.number_elements, lu.length_elements, por, perm, info_refined_volumes)
+#new_dataset = DatasetWriter('imex_datasets/spe_10_case_2/spe_10_case_2.dat', lu.coarsening, lu.number_elements, lu.length_elements, por, perm, info_refined_volumes)
 
 ############### RUN IMPRESS ###############
 #mesh = impress(mesh_file = 'mesh/20.h5m', dim = 3)
