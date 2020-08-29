@@ -12,6 +12,7 @@ from impress.preprocessor.meshHandle.configTools.configClass import coarseningIn
 class ExtendedLocalProblems(LocalProblems, ExtendedAssembly, ExtendedBoundaryConditions):
 
     def __init__(self, mesh_file = None, dataset = None):
+        initial_time = time.time()
 
         print('\n##### ExtendedLocalProblems class initialized #####')
 
@@ -40,13 +41,8 @@ class ExtendedLocalProblems(LocalProblems, ExtendedAssembly, ExtendedBoundaryCon
 
         #self.solve_extended_local_problems()
 
+
     def volumes_extended_local_problem(self, coarse_volume):
-
-        global_ids_extended_local_problem, local_ids_extended_local_problem = self.volumes_extended_local_problem1(coarse_volume)
-
-        return global_ids_extended_local_problem, local_ids_extended_local_problem
-
-    def volumes_extended_local_problem1(self, coarse_volume):
         """
         Define temporary local ids for an extended local problem
         """
@@ -56,38 +52,13 @@ class ExtendedLocalProblems(LocalProblems, ExtendedAssembly, ExtendedBoundaryCon
         if delete_default_value.size != 0:
             coarse_neighbors = np.delete(coarse_neighbors, index)
 
-        global_ids_extended_local_problem = np.array([], dtype = int)
-        global_ids_extended_local_problem = np.append(global_ids_extended_local_problem, self.coarse.elements[coarse_volume].volumes.father_id[:])
+        global_ids_extended_local_problem = []
+        global_ids_extended_local_problem.append(self.coarse.elements[coarse_volume].volumes.father_id[:])
 
         for neighbor in coarse_neighbors:
-            global_ids_extended_local_problem = np.append(global_ids_extended_local_problem, self.coarse.elements[neighbor].volumes.father_id[:])
+            global_ids_extended_local_problem.append(self.coarse.elements[neighbor].volumes.father_id[:])
 
-        local_ids_extended_local_problem = np.arange(len(global_ids_extended_local_problem), dtype = int)
-
-        return global_ids_extended_local_problem, local_ids_extended_local_problem
-
-    def volumes_extended_local_problem2(self, coarse_volume):
-
-        all_fine_volumes = self.coarse.elements[coarse_volume].volumes.father_id[:]
-        boundary_fine_volumes = self.coarse.elements[coarse_volume].volumes.boundary
-        boundary_fine_volumes = self.coarse.elements[coarse_volume].volumes.father_id[boundary_fine_volumes]
-
-        temp_fine_boundary_neighbors = self.mesh.volumes.bridge_adjacencies(boundary_fine_volumes, 2, 3)
-
-        fine_boundary_neighbors = np.array([])
-        for i in temp_fine_boundary_neighbors:
-            fine_boundary_neighbors = np.append(fine_boundary_neighbors, i)
-
-        fine_boundary_neighbors = np.unique(fine_boundary_neighbors)
-
-        intersections, indexes, discard = np.intersect1d(fine_boundary_neighbors, all_fine_volumes, return_indices = True)
-
-        ring_extended_local_problem = np.delete(fine_boundary_neighbors, indexes).astype(int)
-
-        global_ids_extended_local_problem = np.array([], int)
-        global_ids_extended_local_problem = np.append(global_ids_extended_local_problem, self.coarse.elements[coarse_volume].volumes.father_id[:])
-        global_ids_extended_local_problem = np.append(global_ids_extended_local_problem, ring_extended_local_problem)
-
+        global_ids_extended_local_problem = np.sort(np.array(global_ids_extended_local_problem).flatten())
         local_ids_extended_local_problem = np.arange(len(global_ids_extended_local_problem), dtype = int)
 
         return global_ids_extended_local_problem, local_ids_extended_local_problem
@@ -134,7 +105,7 @@ class ExtendedLocalProblems(LocalProblems, ExtendedAssembly, ExtendedBoundaryCon
             w = []
 
             #for direction in self.direction_string:
-            for direction in np.array(['x', 'y', 'z']):
+            for direction in 'x':
                 print('In {} direction'.format(direction))
                 self.direction = direction
                 transmissibility, source, correct_volumes_group_1 = self.set_boundary_conditions(general_transmissibility, coarse_volume)
